@@ -389,7 +389,7 @@ export const WorkspaceLayout: React.FC = () => {
             <div className="mx-auto w-full max-w-xl">
               <QuickAdd onAdd={handleQuickAdd} />
             </div>
-            <div className="absolute right-4 top-5 hidden lg:block lg:right-8">
+            <div className="absolute right-4 top-5 hidden xl:block lg:right-8">
               <SystemClock />
             </div>
           </div>
