@@ -264,7 +264,7 @@ At the time this context was updated:
 - Tasks persist in `localStorage` under `vido.tasks.v1`.
 - Progress, checkpoints, pace, search, filters, Today queue, Focus mode, welcome, intention, and archive are implemented.
 - Recognised tasks show an image **and** their title; unrecognised tasks stay as text.
-- The verification gates are typecheck, 127 tests, and production build.
-- PR #17 is closed and superseded by PR #19 (`feat/ui-redesign`, targeting the upstream `feat/ui-redesign` branch). Discussion #18 records the UI rationale.
-- This branch is the emoji-free build for the UI redesign (127 tests, including the `noEmoji` guard).
+- The verification gates are typecheck, 130 tests, and production build.
+- PR #19 (UI redesign) is merged into upstream `feat/ui-redesign`; PR #26 (12h/24h time formats) is open on `feat/time-formats`. Discussions #18 and #27 record the rationale. PR #17 is closed.
+- This branch is the emoji-free host build (130 tests, including the `noEmoji` guard).
 - Local auth, reminders, and sharing are browser-local prototypes. Supabase Auth, cross-device sharing, Targets / milestone tracking, mood/vent analysis, calm rewards, and the broader AI agent remain future work.
