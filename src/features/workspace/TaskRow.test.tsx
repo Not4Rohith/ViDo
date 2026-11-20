@@ -13,7 +13,7 @@ describe('TaskRow', () => {
 
     expect(screen.getByText(task.title)).toBeInTheDocument();
     expect(screen.getByText('60%')).toBeInTheDocument();
-    expect(screen.getByText(/today 16:00/i)).toBeInTheDocument();
+    expect(screen.getByText(/today 4:00 pm/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/important/i)).toBeInTheDocument();
     expect(screen.queryByText(/^high$/i)).not.toBeInTheDocument();
   });

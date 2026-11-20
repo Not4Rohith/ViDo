@@ -87,6 +87,15 @@ export function completionTiming(
   return new Date(task.completedAt).getTime() <= dueAt(task).getTime() ? 'on-time' : 'late';
 }
 
+export function formatTimeLabel(value?: string): string {
+  if (!value) return '';
+  const [hours, minutes] = value.split(':').map(Number);
+  if (!Number.isFinite(hours)) return value;
+  const hour = hours % 12 === 0 ? 12 : hours % 12;
+  const mins = Number.isFinite(minutes) ? minutes : 0;
+  return `${hour}:${String(mins).padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`;
+}
+
 export function formatDateLong(date: Date): string {
   return date.toLocaleDateString('en-GB', {
     weekday: 'long',

@@ -27,6 +27,7 @@ import {
 import {
   completionTiming,
   formatDateTime,
+  formatTimeLabel,
   getTaskPace,
   isDueTimePassed,
   isPastDay,
@@ -441,9 +442,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   {parked
                     ? 'No set date'
                     : task.deadlineDate
-                      ? `${task.deadlineDate}${task.dueTime ? ` ${task.dueTime}` : ''}`
+                      ? `${task.deadlineDate}${task.dueTime ? ` · ${formatTimeLabel(task.dueTime)}` : ''}`
                       : task.dueTime
-                        ? `Planned day ${task.dueTime}`
+                        ? `Planned day ${formatTimeLabel(task.dueTime)}`
                         : 'No deadline'}
                 </span>
               </div>

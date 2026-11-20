@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import {
   formatDateTime,
+  formatTimeLabel,
   getTaskPace,
   paceTone,
   relativeDayLabel,
@@ -143,7 +144,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({
               <Clock className="w-3.5 h-3.5" />
               <span>
                 Due {relativeDayLabel(task.dueDate)}
-                {task.dueTime ? ` at ${task.dueTime}` : ''}
+                {task.dueTime ? ` at ${formatTimeLabel(task.dueTime)}` : ''}
               </span>
               {pace.status === 'behind' && (
                 <span className="text-[var(--amber)] inline-flex items-center gap-1">

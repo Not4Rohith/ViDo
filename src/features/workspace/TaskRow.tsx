@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Task } from '../../data/taskTypes';
 import { AlertCircle, ArrowRight, CalendarDays, CheckCircle2, Clock, ListChecks, Maximize2, RotateCcw } from 'lucide-react';
-import { isDueTimePassed, isDueToday, isPastDay, relativeDayLabel } from '../../data/taskDates';
+import { formatTimeLabel, isDueTimePassed, isDueToday, isPastDay, relativeDayLabel } from '../../data/taskDates';
 import { DoodleTitle } from './doodles/DoodleTitle';
 
 export interface TaskRowProps {
@@ -35,7 +35,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
   const dueTimePassed = !parked && isDueTimePassed(task, now);
   const pending = pastDay || dueTimePassed;
   const barColor = isCompleted ? 'var(--green)' : 'var(--accent)';
-  const dueTodayLabel = task.dueTime ? `Today ${task.dueTime}` : 'Today';
+  const dueTodayLabel = task.dueTime ? `Today ${formatTimeLabel(task.dueTime)}` : 'Today';
 
   return (
     <div
@@ -247,9 +247,9 @@ export const TaskRow: React.FC<TaskRowProps> = ({
               {dueTodayLabel}
             </span>
           ) : task.deadlineDate && !task.recurrence ? (
-            <span className="font-bold text-[var(--accent)]">By {relativeDayLabel(deadlineDay, now)}</span>
+            <span className="font-bold text-[var(--accent)]">By {relativeDayLabel(deadlineDay, now)}{task.dueTime ? ` · ${formatTimeLabel(task.dueTime)}` : ''}</span>
           ) : (
-            <span className="text-[var(--muted)]">{relativeDayLabel(task.dueDate, now)}</span>
+            <span className="text-[var(--muted)]">{relativeDayLabel(task.dueDate, now)}{task.dueTime ? ` · ${formatTimeLabel(task.dueTime)}` : ''}</span>
           )}
         </div>
       </div>
