@@ -10,7 +10,7 @@
 | Check | Command | Result | Notes |
 | :--- | :--- | :--- | :--- |
 | **Type Check** | `npm run typecheck` | Passed | Strict TypeScript across all modules, zero errors |
-| **Unit Tests** | `npm test` | Passed | 130/130 tests across 35 test suites |
+| **Unit Tests** | `npm test` | Passed | 127/127 tests passed across 34 test suites |
 | **Production Build** | `npm run build` | Passed | Clean production bundle in `dist/` |
 | **Iconography Guard** | `src/test/noEmoji.test.ts` | Passed | No emoji or text glyphs in `src/` or `index.html`; UI uses SVG icons only |
 | **Accessibility** | Focus indicators & Escape key | Passed | High-contrast focus rings, Escape dismiss, dialog semantics |
@@ -25,7 +25,7 @@ glyph substitutes (bullet, arrow, triangle) are used in application UI.
 Task cards render their artwork as inline Lucide SVGs through
 `src/features/workspace/doodles/doodleIcons.ts`. The Twemoji-style files in
 `public/doodles/` are retained for attribution only and are no longer used by default.
-See `screenshots/iconography-before-after.png` and `screenshots/time-formats-before-after.png` for focused before/after captures.
+See `screenshots/iconography-before-after.png` for a focused before/after.
 
 | Was | Now | Where |
 | :--- | :--- | :--- |
