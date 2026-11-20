@@ -12,7 +12,7 @@ A calm, local-first task workspace where tasks carry an optional deadline, measu
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 
-[Vision](./Idea.md) · [Living Concept](./concept.html) · [Folder Structure](./FOLDER_STRUCTURE.md) · [Agent Guidelines](./AGENTS.md) · [Contributing](./CONTRIBUTING.md) · [Verification Evidence](./review-evidence/README.md)
+[Vision](./Idea.md) · [Living Concept](./concept.html) · [Folder Structure](./FOLDER_STRUCTURE.md) · [Agent Guidelines](./AGENTS.md) · [Contributing](./CONTRIBUTING.md) · [How to Review](./HOW-TO-REVIEW.md) · [Verification Evidence](./review-evidence/README.md)
 
 </div>
 
@@ -134,7 +134,7 @@ Before pushing:
 npm run typecheck && npm test && npm run build
 ```
 
-Before/after screenshots and the route map live in [`review-evidence/`](./review-evidence/README.md).
+Before/after screenshots and the route map live in [`review-evidence/`](./review-evidence/README.md). Reviewers can start with [`HOW-TO-REVIEW.md`](./HOW-TO-REVIEW.md).
 
 ---
 
@@ -177,7 +177,7 @@ React 19 · Vite 6 · TypeScript · Tailwind CSS v4 · React Router 7 · Lucide 
 
 Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
 
-For UI changes, include the approved Discussion link, before/after screenshots, and the routes changed. The redesign in this branch is discussed in [Discussion #18](https://github.com/vicharanashala/ViDo/discussions/18).
+For UI changes, include the approved Discussion link, before/after screenshots, and the routes changed. The redesign is discussed in [Discussion #18](https://github.com/vicharanashala/ViDo/discussions/18), and the time fix in [Discussion #27](https://github.com/vicharanashala/ViDo/discussions/27).
 
 ---
 

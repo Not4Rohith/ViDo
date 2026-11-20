@@ -25,7 +25,7 @@ glyph substitutes (bullet, arrow, triangle) are used in application UI.
 Task cards render their artwork as inline Lucide SVGs through
 `src/features/workspace/doodles/doodleIcons.ts`. The Twemoji-style files in
 `public/doodles/` are retained for attribution only and are no longer used by default.
-See `screenshots/iconography-before-after.png` for a focused before/after.
+See `screenshots/iconography-before-after.png` and `screenshots/time-formats-before-after.png` for focused before/after captures.
 
 | Was | Now | Where |
 | :--- | :--- | :--- |
