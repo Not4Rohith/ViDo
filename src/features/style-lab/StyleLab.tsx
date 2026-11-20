@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Badge, Card, Input } from '../../components/ui';
-import { CheckCircle2, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, ArrowLeft, ArrowRight, Dot } from 'lucide-react';
+import { Doodle } from '../workspace/doodles/Doodles';
+import { DOODLE_LABELS, type DoodleKind } from '../workspace/doodles/doodleMap';
 
-export type AccentCandidate = 'blue' | 'indigo' | 'green';
+export type AccentCandidate = 'clay' | 'blue' | 'indigo' | 'green';
 
 export const ACCENTS: { id: AccentCandidate; name: string; hex: string; bgHex: string; desc: string }[] = [
+  {
+    id: 'clay',
+    name: 'Warm Clay',
+    hex: '#c45a3c',
+    bgHex: '#f9e7df',
+    desc: 'Warm, human, and editorial. Pairs with the cream canvas for a calmer daily workspace.',
+  },
   {
     id: 'blue',
     name: 'Cobalt Blue',
@@ -30,7 +39,7 @@ export const ACCENTS: { id: AccentCandidate; name: string; hex: string; bgHex: s
 ];
 
 export const StyleLab: React.FC = () => {
-  const [activeAccent, setActiveAccent] = useState<AccentCandidate>('blue');
+  const [activeAccent, setActiveAccent] = useState<AccentCandidate>('clay');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-accent', activeAccent);
@@ -49,12 +58,12 @@ export const StyleLab: React.FC = () => {
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Back to Landing Page
               </Link>
-              <span className="text-xs text-[var(--faint)]">•</span>
+              <Dot className="w-3 h-3 text-[var(--faint)] shrink-0" aria-hidden="true" />
               <Link
-                to="/preview"
+                to="/app"
                 className="text-xs font-semibold text-[var(--accent)] hover:underline"
               >
-                Go to Preview
+                Go to App
               </Link>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">ViDo Theme & Accent Lab</h1>
@@ -70,7 +79,7 @@ export const StyleLab: React.FC = () => {
             <span>1. Choose Accent Palette</span>
             <Badge variant="accent">Theme Switcher</Badge>
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {ACCENTS.map((accent) => {
               const isSelected = activeAccent === accent.id;
               return (
@@ -187,9 +196,42 @@ export const StyleLab: React.FC = () => {
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[var(--green)]" /> 2 Checkpoints logged
                 </span>
-                <span className="font-semibold text-[var(--accent)]">Inspect Task →</span>
+                <span className="font-semibold text-[var(--accent)]">Inspect Task</span>
+                <ArrowRight className="w-3 h-3" />
               </div>
             </Card>
+          </div>
+        </section>
+
+        {/* Image Library */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">3. Image Library</h2>
+            <p className="text-xs text-[var(--muted)] mt-1">
+              Every recognised task shows one of these images next to its title. Unrecognised tasks stay as text.
+            </p>
+            <p className="text-[10px] text-[var(--faint)] mt-2">
+              Images: Twemoji (CC-BY 4.0) · OpenMoji (CC BY-SA 4.0) · rawpixel/Openverse (CC0) · Wikimedia Commons (CC0) · Tabler (MIT).
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {(Object.keys(DOODLE_LABELS) as DoodleKind[]).map((kind) => {
+              const meta = DOODLE_LABELS[kind];
+              return (
+                <div
+                  key={kind}
+                  className="flex items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3"
+                >
+                  <div className="w-16 h-12 shrink-0 text-[var(--ink)]">
+                    <Doodle kind={kind} />
+                  </div>
+                  <div>
+                    <span className="text-sm font-semibold">{meta.label}</span>
+                    <p className="text-xs text-[var(--muted)] leading-relaxed">{meta.description}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
