@@ -65,15 +65,16 @@ const MONTHS: Record<string, number> = {
 };
 const RELATIVE_TIME_PATTERN =
   /\b(?:in|after|within)\s+(\d+(?:\.\d+)?|an?|one)\s*(minutes|minute|mins|min|hours|hour|hrs|hr|h|m)\b/i;
-const TWELVE_HOUR_PATTERN = /\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i;
-const TWENTY_FOUR_HOUR_PATTERN = /\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/;
+const TWELVE_HOUR_PATTERN = /\b(?:at\s+)?(\d{1,2})(?:[:.](\d{2}))?\s*(a\.?m?\.?|p\.?m?\.?)\b/i;
+const TWENTY_FOUR_HOUR_PATTERN = /\b(?:at\s+)?([01]?\d|2[0-3])[:.]([0-5]\d)\b/;
+const HOUR_24_PATTERN = /\b(?:at\s+)?([01]?\d|2[0-3])h([0-5]\d)?\b/i;
 
 function normalizeTime(hours: number, minutes: number, meridiem?: string): string {
   let hour = hours;
   if (meridiem) {
-    const lower = meridiem.toLowerCase();
-    if (lower === 'pm' && hour < 12) hour += 12;
-    if (lower === 'am' && hour === 12) hour = 0;
+    const lower = meridiem.toLowerCase().replace(/\./g, '');
+    if ((lower === 'pm' || lower === 'p') && hour < 12) hour += 12;
+    if ((lower === 'am' || lower === 'a') && hour === 12) hour = 0;
   }
   return `${String(hour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
@@ -201,6 +202,12 @@ export function parseQuickAdd(input: string, reference: Date = new Date()): Pars
       if (twentyFourHourMatch) {
         dueTime = normalizeTime(Number(twentyFourHourMatch[1]), Number(twentyFourHourMatch[2]));
         working = working.replace(twentyFourHourMatch[0], ' ');
+      } else {
+        const hour24Match = working.match(HOUR_24_PATTERN);
+        if (hour24Match) {
+          dueTime = normalizeTime(Number(hour24Match[1]), Number(hour24Match[2] ?? 0));
+          working = working.replace(hour24Match[0], ' ');
+        }
       }
     }
   }

@@ -108,6 +108,22 @@ describe('parseQuickAdd', () => {
     expect(parsed.dueDate).toBe(toDateKey(addDays(reference, 1)));
   });
 
+
+  it('reads dot-separated times and dotted meridiem markers', () => {
+    expect(parseQuickAdd('Laundry at 8:30pm', reference).dueTime).toBe('20:30');
+    expect(parseQuickAdd('Laundry at 8.30pm', reference).dueTime).toBe('20:30');
+    expect(parseQuickAdd('Laundry at 8:30 p.m.', reference).dueTime).toBe('20:30');
+    expect(parseQuickAdd('Laundry at 8:30 a.m.', reference).dueTime).toBe('08:30');
+    expect(parseQuickAdd('Laundry at 20.30', reference).dueTime).toBe('20:30');
+    expect(parseQuickAdd('Laundry at 8:30p', reference).dueTime).toBe('20:30');
+    expect(parseQuickAdd('Laundry at 20h30', reference).dueTime).toBe('20:30');
+    expect(parseQuickAdd('Laundry at 20h', reference).dueTime).toBe('20:00');
+
+    const laundry = parseQuickAdd('Laundry at 8:30pm', reference);
+    expect(laundry.title).toBe('Laundry');
+    expect(laundry.dueDate).toBe(toDateKey(reference));
+  });
+
   it('returns an empty title when the input is only metadata', () => {
     const parsed = parseQuickAdd('tomorrow 5pm', reference);
     expect(parsed.title).toBe('');

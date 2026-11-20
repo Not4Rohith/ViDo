@@ -72,6 +72,7 @@ Legacy `/preview/*` and `/workspace/*` links redirect to `/app/*`.
 ### Capture and lifecycle
 - One-field quick add with natural-language dates, times, priority, and category.
 - Calendar control for planned dates, deadlines, and recurrence; available before typing.
+- Times accept 12-hour (`8:30 PM`) and 24-hour (`20:30`) input, and display as `8:30 PM`.
 - Create, edit, complete, reopen, archive, restore, and delete.
 
 ### Progress and history
@@ -122,7 +123,7 @@ Open [http://localhost:5173](http://localhost:5173). No Java, Firebase project, 
 | Command | Description |
 |---|---|
 | `npm run dev` | Start the Vite dev server. |
-| `npm test` | Run the Vitest suite — **127 tests across 34 suites**. |
+| `npm test` | Run the Vitest suite — **130 tests across 35 suites**. |
 | `npm run typecheck` | Strict TypeScript, zero emit. |
 | `npm run build` | Production build into `dist/`. |
 | `npm run preview` | Preview the production build. |

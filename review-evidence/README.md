@@ -10,7 +10,7 @@
 | Check | Command | Result | Notes |
 | :--- | :--- | :--- | :--- |
 | **Type Check** | `npm run typecheck` | Passed | Strict TypeScript across all modules, zero errors |
-| **Unit Tests** | `npm test` | Passed | 127/127 tests passed across 34 test suites |
+| **Unit Tests** | `npm test` | Passed | 130/130 tests across 35 test suites |
 | **Production Build** | `npm run build` | Passed | Clean production bundle in `dist/` |
 | **Iconography Guard** | `src/test/noEmoji.test.ts` | Passed | No emoji or text glyphs in `src/` or `index.html`; UI uses SVG icons only |
 | **Accessibility** | Focus indicators & Escape key | Passed | High-contrast focus rings, Escape dismiss, dialog semantics |

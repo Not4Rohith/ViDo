@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Task } from '../../../data/taskTypes';
-import { getTaskPace, greeting, paceTone, relativeDayLabel, toDateKey } from '../../../data/taskDates';
+import { formatTimeLabel, getTaskPace, greeting, paceTone, relativeDayLabel, toDateKey } from '../../../data/taskDates';
 import { TaskRow } from '../TaskRow';
 import { DoodleTitle } from '../doodles/DoodleTitle';
 import { WelcomeCard } from '../WelcomeCard';
@@ -136,6 +136,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <span className="inline-flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
                   {relativeDayLabel(focusTask.dueDate)}
+                  {focusTask.dueTime ? ` · ${formatTimeLabel(focusTask.dueTime)}` : ''}
                 </span>
                 <Dot className="w-3 h-3 text-[var(--faint)] shrink-0" aria-hidden="true" />
                 <span>{focusTask.progress}% complete</span>
