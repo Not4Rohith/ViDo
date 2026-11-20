@@ -41,6 +41,7 @@ export const DoodleTitle: React.FC<DoodleTitleProps> = ({
     <span className="inline-flex items-center gap-2 min-w-0">
       <span
         aria-hidden="true"
+        data-testid="doodle-icon"
         onClick={onImageClick}
         className={`inline-flex shrink-0 overflow-hidden rounded-md ${IMAGE_SIZES[size]} ${
           onImageClick ? 'cursor-pointer' : ''

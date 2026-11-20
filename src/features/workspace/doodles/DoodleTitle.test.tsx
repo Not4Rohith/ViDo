@@ -8,10 +8,11 @@ describe('DoodleTitle', () => {
     window.localStorage.clear();
   });
 
-  it('renders the image and the task title together for recognised tasks', () => {
+  it('renders an SVG icon and the task title together for recognised tasks', () => {
     const { container } = render(<DoodleTitle title="Making laundry" />);
 
-    expect(container.querySelector('img')).toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeInTheDocument();
+    expect(container.querySelector('img')).not.toBeInTheDocument();
     expect(screen.getByText('Making laundry')).toBeInTheDocument();
   });
 
@@ -19,6 +20,7 @@ describe('DoodleTitle', () => {
     render(<DoodleTitle title="Buy milk" />);
 
     expect(screen.getByText('Buy milk')).toBeInTheDocument();
+    expect(document.querySelector('svg')).not.toBeInTheDocument();
     expect(document.querySelector('img')).not.toBeInTheDocument();
   });
 
@@ -32,10 +34,10 @@ describe('DoodleTitle', () => {
     expect(screen.getByText('Buy milk')).toBeInTheDocument();
   });
 
-  it('uses the desk image for work tasks without a specific image', () => {
+  it('uses the desk icon for work tasks without a specific icon', () => {
     const { container } = render(<DoodleTitle title="Buy milk" category="work" />);
 
-    expect(container.querySelector('img')).toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeInTheDocument();
     expect(screen.getByText('Buy milk')).toBeInTheDocument();
   });
 });

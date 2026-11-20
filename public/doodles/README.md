@@ -1,3 +1,10 @@
+# Task icons and legacy images
+
+> **Legacy assets.** The workspace now renders task-card icons as inline SVG
+> Lucide icons (`src/features/workspace/doodles/doodleIcons.ts`). The image
+> files in this folder are retained for attribution and history only; they are
+> no longer used by default.
+
 # Doodle images
 
 The doodle SVGs in this folder are from **Twemoji** by Twitter.

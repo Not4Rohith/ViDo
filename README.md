@@ -98,7 +98,7 @@ No account, server, or external service is required.
 
 ## 🔣 Iconography
 
-Every UI symbol is an SVG icon from [Lucide](https://lucide.dev/). No emoji characters and no typographic glyph substitutes (bullet, arrow, triangle) appear in application UI.
+Every UI symbol — including task-card artwork — is an SVG icon from [Lucide](https://lucide.dev/). No emoji characters and no typographic glyph substitutes (bullet, arrow, triangle) appear in application UI. Task icons come from `src/features/workspace/doodles/doodleIcons.ts`; the old Twemoji-style files are retained for attribution only.
 
 `src/test/noEmoji.test.ts` scans `src/**/*.{ts,tsx,css}` and `index.html` for emoji and replaced glyph codepoints, and fails with a `file:line` list if any return.
 

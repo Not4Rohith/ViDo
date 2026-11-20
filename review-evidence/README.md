@@ -22,6 +22,11 @@
 All UI symbols are SVG icons from `lucide-react`; no emoji characters or typographic
 glyph substitutes (bullet, arrow, triangle) are used in application UI.
 
+Task cards render their artwork as inline Lucide SVGs through
+`src/features/workspace/doodles/doodleIcons.ts`. The Twemoji-style files in
+`public/doodles/` are retained for attribution only and are no longer used by default.
+See `screenshots/iconography-before-after.png` for a focused before/after.
+
 | Was | Now | Where |
 | :--- | :--- | :--- |
 | Text bullet | `Dot` icon | Welcome card list, Home focus meta, Style Lab nav |

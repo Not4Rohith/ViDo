@@ -148,7 +148,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                 event.stopPropagation();
                 onOpenPath(task.id);
               }}
-              className="mt-1 text-[10px] font-bold text-[var(--accent)] hover:underline cursor-pointer"
+              className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-[var(--accent)] hover:underline cursor-pointer"
             >
               Break into steps <ArrowRight className="w-3 h-3" />
             </button>

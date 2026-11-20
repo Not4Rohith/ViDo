@@ -42,7 +42,7 @@ You must strictly maintain the directory structure documented in `FOLDER_STRUCTU
 - **Real Dates**: Views are calculated from the current date. Seed data is generated relative to today by `createSeedTasks()`.
 - **Progress Is Real**: Tasks carry `progress` (0–100) and a checkpoint timeline. The pace-vs-deadline signal is part of the product, not decoration.
 - **Gentle Language**: Standard view names are primary, grouped as Main, Plan, and History. Warm copy belongs in page content. Avoid pressure counts, red progress bars, and accountability language.
-- **Iconography**: Use SVG icons from `lucide-react` for every symbol. No emoji characters and no typographic glyph substitutes (bullet, arrow, triangle) in UI. A regression test guards this.
+- **Iconography**: Use SVG icons from `lucide-react` for every symbol, including task-card artwork (`doodleIcons.ts`). No emoji characters, Twemoji artwork, or typographic glyph substitutes in UI. A regression test guards the glyph rule.
 
 ---
 

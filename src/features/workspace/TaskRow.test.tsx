@@ -136,16 +136,17 @@ describe('TaskRow', () => {
       />
     );
 
-    fireEvent.click(container.querySelector('img')!);
+    fireEvent.click(container.querySelector('[data-testid="doodle-icon"] svg')!);
     expect(onCheckInStart).toHaveBeenCalledWith(task);
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('renders the image and title together for a recognised task', () => {
+  it('renders the icon and title together for a recognised task', () => {
     const laundry = { ...task, title: 'Making laundry' };
     const { container } = render(<TaskRow task={laundry} now={reference} onClick={vi.fn()} />);
 
-    expect(container.querySelector('img')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="doodle-icon"] svg')).toBeInTheDocument();
+    expect(container.querySelector('img')).not.toBeInTheDocument();
     expect(screen.getByText('Making laundry')).toBeInTheDocument();
   });
 });
