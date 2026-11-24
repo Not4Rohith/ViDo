@@ -88,9 +88,10 @@ describe('Workspace Views and Modals', () => {
       expect(screen.queryByText(/priority:/i)).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear all/i })).not.toBeInTheDocument();
 
-      // Verify all active non-archived tasks are listed
-      const activeTasks = SAMPLE_TASKS.filter((t) => t.state === 'active' && !t.isArchived);
-      expect(screen.getByText(new RegExp(`${activeTasks.length} tasks`, 'i'))).toBeInTheDocument();
+      // Verify all default board columns are rendered without filters
+      expect(screen.getByRole('heading', { name: /personal & routine/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /work & professional/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /household & living/i })).toBeInTheDocument();
     });
 
     it('renders Dashboard by default and Tasks view when initialTab is tasks without in-page dual navigation', () => {

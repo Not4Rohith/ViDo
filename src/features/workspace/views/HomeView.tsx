@@ -124,7 +124,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     'today' | 'needsAttention' | 'upcoming' | 'completed'
   >('today');
 
-  const [internalStatusFilter, setInternalStatusFilter] = useState<StatusFilter>(initialStatus);
+  const [internalStatusFilter, setInternalStatusFilter] = useState<StatusFilter>(effectiveInitialStatus);
   const [internalCategoryFilter, setInternalCategoryFilter] = useState<CategoryFilter>('all');
   const [internalSelectedCategories, setInternalSelectedCategories] = useState<string[]>([]);
   const [internalPriorityFilter, setInternalPriorityFilter] = useState<PriorityFilter>('all');
@@ -163,9 +163,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   useEffect(() => {
     if (propStatusFilter === undefined) {
-      setInternalStatusFilter(initialStatus);
+      setInternalStatusFilter(effectiveInitialStatus);
     }
-  }, [initialStatus, propStatusFilter]);
+  }, [effectiveInitialStatus, propStatusFilter]);
 
   // Tasks Filtered for the "Tasks" Tab
   const displayedTasks = allTasks.filter((task) => {
