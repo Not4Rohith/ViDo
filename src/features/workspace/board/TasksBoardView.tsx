@@ -364,6 +364,7 @@ export const TasksBoardView: React.FC<TasksBoardViewProps> = ({
               onOpenDatePopover={handleOpenDatePopover}
               onOpenRepeatModal={handleOpenRepeatPopover}
               onOpenDeadlinePopover={handleOpenDeadlinePopover}
+              categories={displayedColumns}
               referenceDateStr={referenceDateStr}
               isPreview={isPreview}
               draggedTaskId={draggedTaskId}

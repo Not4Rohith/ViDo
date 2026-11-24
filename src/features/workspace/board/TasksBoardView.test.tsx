@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { TasksBoardView } from './TasksBoardView';
 import { formatCompletedDate } from './TaskBoardCard';
 import { SampleTask } from '../../../data/sampleTasks';
@@ -534,20 +534,20 @@ describe('TasksBoardView Component', () => {
     fireEvent.click(optionsButtons[0]);
 
     // Delete Task option is visible
-    expect(screen.getByText('Delete Task')).toBeInTheDocument();
+    expect(screen.getByText(/delete task/i)).toBeInTheDocument();
 
     // Click outside on the document body
     fireEvent.mouseDown(document.body);
 
     // Verify Delete Task menu closed
-    expect(screen.queryByText('Delete Task')).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete task/i)).not.toBeInTheDocument();
 
     // Reopen and test Escape key
     fireEvent.click(optionsButtons[0]);
-    expect(screen.getByText('Delete Task')).toBeInTheDocument();
+    expect(screen.getByText(/delete task/i)).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByText('Delete Task')).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete task/i)).not.toBeInTheDocument();
   });
 
   it('handles Delete all completed tasks and Clean up old tasks separately with distinct disabled states and handlers', () => {
@@ -670,7 +670,7 @@ describe('TasksBoardView Component', () => {
 
     // 2. Expand task with recurrence: Deadline button must be disabled
     fireEvent.click(screen.getByText('Daily Standup'));
-    const deadlineBtnDisabled = screen.getByRole('button', { name: /^deadline$/i });
+    const deadlineBtnDisabled = screen.getByRole('button', { name: /^set deadline$/i });
     expect(deadlineBtnDisabled).toBeDisabled();
     expect(deadlineBtnDisabled).toHaveClass('cursor-not-allowed');
 
@@ -714,18 +714,19 @@ describe('TasksBoardView Component', () => {
     fireEvent.click(screen.getByText('Write Documentation'));
 
     // Click Deadline button to open TaskDeadlinePopover
-    const deadlineBtn = screen.getByRole('button', { name: /^deadline$/i });
+    const deadlineBtn = screen.getByRole('button', { name: /^set deadline$/i });
     fireEvent.click(deadlineBtn);
 
     // Dialog appears
-    expect(screen.getByRole('dialog', { name: /set deadline/i })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: /set deadline/i });
+    expect(dialog).toBeInTheDocument();
 
     // Click quick preset: Tomorrow (23:59)
-    const tomorrowBtn = screen.getByRole('button', { name: /tomorrow \(23:59\)/i });
+    const tomorrowBtn = within(dialog).getByRole('button', { name: /tomorrow \(23:59\)/i });
     fireEvent.click(tomorrowBtn);
 
     // Click Set Deadline action
-    const setDeadlineBtn = screen.getByRole('button', { name: /set deadline/i });
+    const setDeadlineBtn = within(dialog).getByRole('button', { name: /set deadline/i });
     fireEvent.click(setDeadlineBtn);
 
     expect(handleUpdateTask).toHaveBeenCalledWith(
@@ -773,5 +774,148 @@ describe('TasksBoardView Component', () => {
     expect(screen.getByRole('button', { name: /deadline: nov 25, 23:59/i })).toBeInTheDocument();
     // Repeat button is disabled because deadline is present
     expect(screen.getByRole('button', { name: /repeat/i })).toBeDisabled();
+  });
+
+  it('opens 3-dots task context menu and supports category switching and setting deadline', () => {
+    const handleUpdateTask = vi.fn();
+    const handleToggleStar = vi.fn();
+    const singleTask: SampleTask[] = [
+      {
+        id: 'menu-task-1',
+        title: 'Review Quarterly Budget',
+        category: 'work',
+        dueDate: '2026-11-17',
+        state: 'active',
+        createdAt: '2026-11-16T10:00:00Z',
+      },
+    ];
+
+    render(
+      <TasksBoardView
+        tasks={singleTask}
+        onToggleTask={vi.fn()}
+        onUpdateTask={handleUpdateTask}
+        onDeleteTask={vi.fn()}
+        onToggleStar={handleToggleStar}
+        onAddTask={vi.fn()}
+      />
+    );
+
+    // Open 3-dots options menu on the card
+    const moreBtn = screen.getByRole('button', { name: /more task options/i });
+    fireEvent.click(moreBtn);
+
+    // Context menu options should appear
+    expect(screen.getByText('Add to starred')).toBeInTheDocument();
+    expect(screen.getByText('Set deadline')).toBeInTheDocument();
+    expect(screen.getByText('Delete task')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /personal & routine/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /household & living/i })).toBeInTheDocument();
+
+    // Click category button "Personal & Routine" to move task
+    fireEvent.click(screen.getByRole('button', { name: /personal & routine/i }));
+
+    expect(handleUpdateTask).toHaveBeenCalledWith('menu-task-1', {
+      category: 'personal',
+    });
+  });
+
+  it('allows setting deadline via 3-dots context menu option', () => {
+    const singleTask: SampleTask[] = [
+      {
+        id: 'menu-task-2',
+        title: 'Submit Tax Forms',
+        category: 'home',
+        dueDate: '2026-11-17',
+        state: 'active',
+        createdAt: '2026-11-16T10:00:00Z',
+      },
+    ];
+
+    render(
+      <TasksBoardView
+        tasks={singleTask}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onToggleStar={vi.fn()}
+        onAddTask={vi.fn()}
+      />
+    );
+
+    // Open 3-dots menu
+    const moreBtn = screen.getByRole('button', { name: /more task options/i });
+    fireEvent.click(moreBtn);
+
+    // Click Set deadline in menu
+    const setDeadlineOption = screen.getByText('Set deadline');
+    fireEvent.click(setDeadlineOption);
+
+    // Deadline dialog should appear
+    expect(screen.getByRole('dialog', { name: /set deadline/i })).toBeInTheDocument();
+  });
+
+  it('supports expanded inline card editing with subtask addition, priority pill selection in toolbar, and done collapse', () => {
+    const handleUpdateTask = vi.fn();
+    const taskToEdit: SampleTask[] = [
+      {
+        id: 'edit-task-1',
+        title: 'Clean Garage',
+        category: 'home',
+        dueDate: '2026-11-17',
+        description: 'Sweep and organize boxes',
+        priority: 'low',
+        state: 'active',
+        createdAt: '2026-11-16T10:00:00Z',
+        subtasks: [
+          { id: 'st-1', title: 'Buy storage boxes', completed: false },
+        ],
+      },
+    ];
+
+    render(
+      <TasksBoardView
+        tasks={taskToEdit}
+        onToggleTask={vi.fn()}
+        onUpdateTask={handleUpdateTask}
+        onToggleStar={vi.fn()}
+        onAddTask={vi.fn()}
+      />
+    );
+
+    // Click title to expand the card
+    fireEvent.click(screen.getByText('Clean Garage'));
+
+    // Details textarea should be present
+    const detailsInput = screen.getByPlaceholderText('Details');
+    expect(detailsInput).toBeInTheDocument();
+    expect(detailsInput).toHaveValue('Sweep and organize boxes');
+
+    // Add subtask input should be present
+    const addSubtaskInput = screen.getByPlaceholderText('Add subtask');
+    expect(addSubtaskInput).toBeInTheDocument();
+    fireEvent.change(addSubtaskInput, { target: { value: 'Label containers' } });
+    fireEvent.submit(addSubtaskInput.closest('form')!);
+
+    expect(handleUpdateTask).toHaveBeenCalledWith('edit-task-1', {
+      subtasks: expect.arrayContaining([
+        expect.objectContaining({ title: 'Buy storage boxes' }),
+        expect.objectContaining({ title: 'Label containers' }),
+      ]),
+    });
+
+    // Priority selector in bottom toolbar
+    const highPriorityBtn = screen.getByRole('button', { name: /^high$/i });
+    fireEvent.click(highPriorityBtn);
+
+    expect(handleUpdateTask).toHaveBeenCalledWith('edit-task-1', {
+      priority: 'high',
+    });
+
+    // Done button collapses the card
+    const doneBtn = screen.getByRole('button', { name: /^done$/i });
+    fireEvent.click(doneBtn);
+
+    // Textarea should no longer be present
+    expect(screen.queryByPlaceholderText('Details')).not.toBeInTheDocument();
   });
 });

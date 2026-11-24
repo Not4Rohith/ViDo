@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SampleTask } from '../../../data/sampleTasks';
-import { getTaskPriorityCardStyle, DEFAULT_PRIORITY_COLORS, PriorityColors } from '../../../utils/priorityColor';
+import { getTaskPriorityCardStyle, PriorityColors } from '../../../utils/priorityColor';
 import { formatRecurrenceLabel, formatTaskDate } from '../../../utils/recurrence';
 import {
   Circle,
@@ -14,9 +14,9 @@ import {
   CornerDownRight,
   Plus,
   Trash2,
-  Flag,
   X,
   CalendarClock,
+  Check,
 } from 'lucide-react';
 
 export interface TaskBoardCardProps {
@@ -31,6 +31,7 @@ export interface TaskBoardCardProps {
   onOpenDatePopover: (e: React.MouseEvent, taskId: string) => void;
   onOpenRepeatModal: (e: React.MouseEvent, taskId: string) => void;
   onOpenDeadlinePopover?: (e: React.MouseEvent, taskId: string) => void;
+  categories?: { id: string; title: string }[];
   referenceDateStr?: string;
   isPreview?: boolean;
   // Drag and Drop props
@@ -96,6 +97,12 @@ export function formatCompletedDate(
   }
 }
 
+const DEFAULT_CATEGORIES: { id: string; title: string }[] = [
+  { id: 'personal', title: 'Personal & Routine' },
+  { id: 'home', title: 'Household & Living' },
+  { id: 'work', title: 'Work & Professional' },
+];
+
 export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
   task,
   isExpanded,
@@ -108,6 +115,7 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
   onOpenDatePopover,
   onOpenRepeatModal,
   onOpenDeadlinePopover,
+  categories = DEFAULT_CATEGORIES,
   referenceDateStr = '2026-11-17',
   isPreview: _isPreview = true,
   isDraggable = true,
@@ -126,6 +134,8 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
   const [menuOpensUpward, setMenuOpensUpward] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const activeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
   // Automatically close task options menu when clicking outside or pressing Escape
   useEffect(() => {
@@ -436,6 +446,8 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
               className={`p-1 rounded-full transition-colors cursor-pointer ${
                 task.starred
                   ? 'text-amber-500'
+                  : isExpanded
+                  ? 'text-[var(--faint)] hover:text-amber-500'
                   : 'text-transparent group-hover:text-[var(--faint)] hover:text-amber-500'
               }`}
             >
@@ -450,7 +462,7 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                   e.stopPropagation();
                   try {
                     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                    if (window.innerHeight - rect.bottom < 80 && rect.top > 80) {
+                    if (window.innerHeight - rect.bottom < 240 && rect.top > 240) {
                       setMenuOpensUpward(true);
                     } else {
                       setMenuOpensUpward(false);
@@ -460,7 +472,11 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                 }}
                 aria-label="More task options"
                 aria-expanded={isMenuOpen}
-                className="p-1 rounded-full text-transparent group-hover:text-[var(--faint)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+                className={`p-1 rounded-full transition-colors cursor-pointer ${
+                  isExpanded
+                    ? 'text-[var(--faint)] hover:text-[var(--ink)]'
+                    : 'text-transparent group-hover:text-[var(--faint)] hover:text-[var(--ink)]'
+                }`}
               >
                 <MoreVertical className="w-3.5 h-3.5" />
               </button>
@@ -468,23 +484,95 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
               {isMenuOpen && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className={`absolute right-0 w-36 bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-xl z-30 p-1 space-y-0.5 animate-in fade-in duration-100 ${
+                  className={`absolute right-0 w-60 bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-2xl py-2 z-50 text-xs select-none animate-in fade-in duration-100 ${
                     menuOpensUpward ? 'bottom-full mb-1' : 'top-full mt-1'
                   }`}
                 >
+                  {/* Star Option */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleStar(task.id);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-2 hover:bg-[var(--line)]/50 text-[var(--ink)] transition-colors cursor-pointer text-left"
+                  >
+                    <Star
+                      className={`w-4 h-4 shrink-0 ${
+                        task.starred ? 'fill-amber-500 text-amber-500' : 'text-[var(--muted)]'
+                      }`}
+                    />
+                    <span>{task.starred ? 'Remove from starred' : 'Add to starred'}</span>
+                  </button>
+
+                  {/* Add Deadline */}
+                  {onOpenDeadlinePopover && (
+                    <button
+                      type="button"
+                      disabled={Boolean(task.recurrence?.enabled && task.recurrence?.rule)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (task.recurrence?.enabled && task.recurrence?.rule) return;
+                        setIsMenuOpen(false);
+                        onOpenDeadlinePopover(e, task.id);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-4 py-2 transition-colors cursor-pointer text-left ${
+                        task.recurrence?.enabled && task.recurrence?.rule
+                          ? 'opacity-40 cursor-not-allowed text-[var(--muted)]'
+                          : 'hover:bg-[var(--line)]/50 text-rose-600'
+                      }`}
+                    >
+                      <CalendarClock className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>Set deadline</span>
+                    </button>
+                  )}
+
+                  {/* Delete Task */}
                   {onDelete && (
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onDelete(task.id);
                         setIsMenuOpen(false);
                       }}
-                      className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                      className="w-full flex items-center space-x-3 px-4 py-2 hover:bg-rose-500/10 text-rose-600 transition-colors cursor-pointer text-left"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete Task</span>
+                      <Trash2 className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>Delete task</span>
                     </button>
                   )}
+
+                  <div className="my-1.5 border-t border-[var(--line)]" />
+
+                  {/* Category Switcher with Checkmarks */}
+                  <div className="max-h-48 overflow-y-auto">
+                    {activeCategories.map((cat) => {
+                      const isCurrent = task.category === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdate(task.id, { category: cat.id as any });
+                            setIsMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center space-x-3 px-4 py-2 transition-colors cursor-pointer text-left ${
+                            isCurrent
+                              ? 'text-[var(--ink)] font-medium bg-[var(--line)]/40'
+                              : 'text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--line)]/30'
+                          }`}
+                        >
+                          <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                            {isCurrent && <Check className="w-4 h-4 text-[var(--accent)]" />}
+                          </div>
+                          <span className="truncate">{cat.title}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -510,53 +598,13 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
             />
           </div>
 
-          {/* Priority Row */}
-          <div className="flex items-center space-x-2 flex-wrap gap-y-1.5 pl-6">
-            <div className="flex items-center space-x-1.5 shrink-0">
-              <Flag className="w-3.5 h-3.5 text-[var(--muted)] shrink-0" />
-              <span className="text-[11px] font-semibold text-[var(--muted)]">Priority:</span>
-            </div>
-            <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
-              {(['low', 'medium', 'high'] as const).map((p) => {
-                const isSelected = (task.priority || 'low') === p;
-                const dotColor =
-                  p === 'high'
-                    ? DEFAULT_PRIORITY_COLORS.high
-                    : p === 'medium'
-                    ? DEFAULT_PRIORITY_COLORS.medium
-                    : '';
-
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => onUpdate(task.id, { priority: p })}
-                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize transition-all border flex items-center space-x-1.5 cursor-pointer ${
-                      isSelected
-                        ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-xs'
-                        : 'bg-[var(--canvas)] text-[var(--muted)] border-[var(--line)] hover:text-[var(--ink)]'
-                    }`}
-                  >
-                    {dotColor && (
-                      <span
-                        className="w-1.5 h-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: isSelected ? '#ffffff' : dotColor }}
-                      />
-                    )}
-                    <span>{p}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Date & Time, Deadline, Repeat Row */}
           <div className="flex items-center space-x-2 flex-wrap gap-y-1.5 pl-6">
             {/* 1. Date/time button */}
             <button
               type="button"
               onClick={(e) => onOpenDatePopover(e, task.id)}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 border rounded-full text-[11px] font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
                 isLate
                   ? 'bg-rose-500/10 text-rose-700 border-rose-500/30'
                   : task.dueDate && dateInfo.isToday
@@ -564,7 +612,7 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                   : 'bg-[var(--canvas)] text-[var(--ink)] border-[var(--line)] hover:bg-[var(--line)]/50'
               }`}
             >
-              <Calendar className="w-3 h-3 text-[var(--accent)]" />
+              <Calendar className="w-3.5 h-3.5 text-[var(--accent)]" />
               <span>{task.dueDate ? dateInfo.label : 'Date/time'}</span>
             </button>
 
@@ -577,12 +625,12 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                   if (task.recurrence?.enabled && task.recurrence?.rule) return;
                   onOpenDeadlinePopover && onOpenDeadlinePopover(e, task.id);
                 }}
-                className={`flex items-center space-x-1.5 px-2.5 py-1 border rounded-full text-[11px] font-semibold transition-colors ${
+                className={`inline-flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-lg border font-semibold transition-colors ${
                   task.recurrence?.enabled && task.recurrence?.rule
                     ? 'opacity-40 cursor-not-allowed bg-[var(--canvas)] text-[var(--muted)] border-[var(--line)]'
                     : task.deadline
                     ? 'bg-rose-500/15 text-rose-700 border-rose-400/40 hover:bg-rose-500/25 cursor-pointer'
-                    : 'bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--ink)] border-[var(--line)] cursor-pointer'
+                    : 'bg-[var(--canvas)] text-rose-600 hover:text-rose-700 border-[var(--line)] cursor-pointer'
                 }`}
                 title={
                   task.recurrence?.enabled && task.recurrence?.rule
@@ -592,8 +640,8 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                     : 'Set deadline'
                 }
               >
-                <CalendarClock className={`w-3.5 h-3.5 ${task.deadline ? 'text-rose-600' : 'text-[var(--muted)]'}`} />
-                <span>{task.deadline ? `Deadline: ${formatDeadlineLabel(task.deadline)}` : 'Deadline'}</span>
+                <CalendarClock className={`w-3.5 h-3.5 ${task.deadline ? 'text-rose-600' : 'text-rose-500'}`} />
+                <span>{task.deadline ? `Deadline: ${formatDeadlineLabel(task.deadline)}` : 'Set deadline'}</span>
               </button>
 
               {task.deadline && (
@@ -618,12 +666,12 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                   e.stopPropagation();
                   onOpenRepeatModal(e, task.id);
                 }}
-                className={`flex items-center space-x-1.5 px-2.5 py-1 border rounded-full text-[11px] font-semibold transition-colors ${
+                className={`inline-flex items-center space-x-1.5 text-[11px] px-2.5 py-1 rounded-lg border font-semibold transition-colors ${
                   task.deadline
                     ? 'opacity-40 cursor-not-allowed bg-[var(--canvas)] text-[var(--muted)] border-[var(--line)]'
                     : task.recurrence?.enabled && task.recurrence?.rule
                     ? 'bg-purple-500/15 text-purple-900 border-purple-400/40 hover:bg-purple-500/25 cursor-pointer'
-                    : 'bg-[var(--canvas)] text-[var(--muted)] hover:text-[var(--ink)] border-[var(--line)] cursor-pointer'
+                    : 'bg-[var(--canvas)] text-purple-600 hover:text-purple-700 border-[var(--line)] cursor-pointer'
                 }`}
                 title={
                   task.deadline
@@ -633,7 +681,7 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
                     : 'Repeat'
                 }
               >
-                <Repeat className={`w-3.5 h-3.5 ${task.recurrence?.enabled && task.recurrence?.rule ? 'text-purple-800' : 'text-[var(--muted)]'}`} strokeWidth={2.2} />
+                <Repeat className={`w-3.5 h-3.5 ${task.recurrence?.enabled && task.recurrence?.rule ? 'text-purple-800' : 'text-purple-500'}`} strokeWidth={2.2} />
                 <span>
                   {task.recurrence?.enabled && task.recurrence?.rule
                     ? formatRecurrenceLabel(task.recurrence.rule)
@@ -659,10 +707,7 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
           </div>
 
           {/* Subtasks Section */}
-          <div className="pl-6 pt-1 space-y-1.5 border-t border-[var(--line)]/60">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--faint)] block">
-              Subtasks
-            </span>
+          <div className="pl-6 space-y-1.5">
             {(task.subtasks || []).map((st) => (
               <div
                 key={st.id}
@@ -699,29 +744,60 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
               </div>
             ))}
 
-            <form onSubmit={handleAddSubtask} className="pt-1">
-              <div className="flex items-center space-x-2">
-                <Plus className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-                <input
-                  type="text"
-                  value={newSubtaskTitle}
-                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder="Add subtasks"
-                  className="w-full bg-transparent text-xs text-[var(--ink)] placeholder-[var(--muted)] focus:outline-none border-b border-transparent focus:border-[var(--accent)] py-0.5"
-                />
-              </div>
+            <form onSubmit={handleAddSubtask} className="flex items-center space-x-2 pt-1">
+              <Plus className="w-3.5 h-3.5 text-[var(--faint)] shrink-0" />
+              <input
+                type="text"
+                value={newSubtaskTitle}
+                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                placeholder="Add subtask"
+                className="w-full bg-transparent text-xs text-[var(--ink)] placeholder-[var(--muted)] focus:outline-none border-b border-transparent focus:border-[var(--accent)] py-0.5"
+              />
             </form>
           </div>
 
-          {/* Collapse Done Button */}
-          <div className="flex justify-end pt-1">
-            <button
-              type="button"
-              onClick={onCollapse}
-              className="px-3.5 py-1 text-xs font-semibold bg-[var(--canvas)] hover:bg-[var(--line)] text-[var(--ink)] rounded-lg transition-colors cursor-pointer"
-            >
-              Done
-            </button>
+          {/* Bottom Toolbar: Priority Selector on left, Trash & Done on right */}
+          <div className="flex items-center justify-between pt-2 border-t border-[var(--line)] pl-6">
+            <div className="flex items-center space-x-1">
+              {(['low', 'medium', 'high'] as const).map((pri) => (
+                <button
+                  key={pri}
+                  type="button"
+                  onClick={() => onUpdate(task.id, { priority: pri })}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold capitalize transition-colors cursor-pointer ${
+                    (task.priority || 'low') === pri
+                      ? pri === 'high'
+                        ? 'bg-rose-500/20 text-rose-600 border border-rose-500/40'
+                        : pri === 'medium'
+                        ? 'bg-amber-500/20 text-amber-600 border border-amber-500/40'
+                        : 'bg-blue-500/20 text-blue-600 border border-blue-500/40'
+                      : 'text-[var(--muted)] hover:text-[var(--ink)] bg-[var(--canvas)]'
+                  }`}
+                >
+                  {pri}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(task.id)}
+                  className="text-xs text-rose-500 hover:text-rose-600 p-1 cursor-pointer transition-colors"
+                  title="Delete task"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onCollapse}
+                className="px-3 py-1 bg-[var(--canvas)] hover:bg-[var(--line)] text-xs text-[var(--ink)] rounded-lg transition-colors cursor-pointer font-medium"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

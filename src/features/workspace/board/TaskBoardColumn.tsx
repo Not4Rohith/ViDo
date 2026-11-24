@@ -33,6 +33,7 @@ export interface TaskBoardColumnProps {
   onOpenDatePopover: (e: React.MouseEvent, taskId: string) => void;
   onOpenRepeatModal: (e: React.MouseEvent, taskId: string) => void;
   onOpenDeadlinePopover?: (e: React.MouseEvent, taskId: string) => void;
+  categories?: { id: string; title: string }[];
   referenceDateStr?: string;
   isPreview?: boolean;
   widthClass?: string;
@@ -83,6 +84,7 @@ export const TaskBoardColumn: React.FC<TaskBoardColumnProps> = ({
   onOpenDatePopover,
   onOpenRepeatModal,
   onOpenDeadlinePopover,
+  categories,
   referenceDateStr = '2026-11-17',
   isPreview = true,
   widthClass = 'w-[360px] min-w-[360px] shrink-0',
@@ -575,6 +577,7 @@ export const TaskBoardColumn: React.FC<TaskBoardColumnProps> = ({
             onOpenDatePopover={onOpenDatePopover}
             onOpenRepeatModal={onOpenRepeatModal}
             onOpenDeadlinePopover={onOpenDeadlinePopover}
+            categories={categories}
             referenceDateStr={referenceDateStr}
             isPreview={isPreview}
             isDraggable={true}
@@ -656,6 +659,7 @@ export const TaskBoardColumn: React.FC<TaskBoardColumnProps> = ({
                     onOpenDatePopover={onOpenDatePopover}
                     onOpenRepeatModal={onOpenRepeatModal}
                     onOpenDeadlinePopover={onOpenDeadlinePopover}
+                    categories={categories}
                     referenceDateStr={referenceDateStr}
                     isPreview={isPreview}
                     isDraggable={false}
