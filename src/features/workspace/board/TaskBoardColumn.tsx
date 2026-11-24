@@ -641,19 +641,26 @@ export const TaskBoardColumn: React.FC<TaskBoardColumnProps> = ({
             </button>
 
             {showCompleted && (
-              <div className="mt-2 space-y-1.5 pr-1 animate-in fade-in duration-150">
+              <div className="mt-2.5 space-y-2.5 pr-1 animate-in fade-in duration-150">
                 {completedTasks.map((task) => (
-                  <div
+                  <TaskBoardCard
                     key={task.id}
-                    onClick={() => onToggleTask(task)}
-                    className="flex items-center space-x-2.5 px-2.5 py-1.5 rounded-xl bg-[var(--canvas)]/60 hover:bg-[var(--canvas)] transition-colors cursor-pointer group"
-                    title="Click to mark incomplete"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-[var(--green)] shrink-0" />
-                    <span className="text-xs text-[var(--muted)] line-through truncate flex-1">
-                      {task.title}
-                    </span>
-                  </div>
+                    task={task}
+                    isExpanded={expandedTaskId === task.id}
+                    onExpand={() => onExpandTask(task.id)}
+                    onCollapse={onCollapseTask}
+                    onToggle={onToggleTask}
+                    onUpdate={onUpdateTask}
+                    onDelete={onDeleteTask}
+                    onToggleStar={onToggleStar}
+                    onOpenDatePopover={onOpenDatePopover}
+                    onOpenRepeatModal={onOpenRepeatModal}
+                    onOpenDeadlinePopover={onOpenDeadlinePopover}
+                    referenceDateStr={referenceDateStr}
+                    isPreview={isPreview}
+                    isDraggable={false}
+                    priorityColors={priorityColors}
+                  />
                 ))}
               </div>
             )}

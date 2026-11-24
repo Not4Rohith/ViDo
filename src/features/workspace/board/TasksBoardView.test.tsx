@@ -2,6 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TasksBoardView } from './TasksBoardView';
+import { formatCompletedDate } from './TaskBoardCard';
 import { SampleTask } from '../../../data/sampleTasks';
 
 const sampleTasks: SampleTask[] = [
@@ -150,25 +151,30 @@ describe('TasksBoardView Component', () => {
     expect(handleRenameList).toHaveBeenCalledWith('personal', 'Personal & Habits');
   });
 
-  it('renders and expands completed tasks accordion', () => {
+  it('renders and expands completed tasks accordion and supports delete on hover', () => {
+    const handleDeleteTask = vi.fn();
+    const handleToggleTask = vi.fn();
     const tasksWithCompleted: SampleTask[] = [
       ...sampleTasks,
       {
         id: 't-completed',
         title: 'Finished Tax Filing',
+        description: 'Filed all forms before midnight',
         category: 'personal',
         dueDate: '2026-11-17',
         priority: 'low',
         state: 'completed',
         createdAt: '2026-11-16T10:00:00Z',
+        completedAt: '2026-11-17T14:30:00Z',
       },
     ];
 
     render(
       <TasksBoardView
         tasks={tasksWithCompleted}
-        onToggleTask={vi.fn()}
+        onToggleTask={handleToggleTask}
         onUpdateTask={vi.fn()}
+        onDeleteTask={handleDeleteTask}
         onToggleStar={vi.fn()}
         onAddTask={vi.fn()}
       />
@@ -184,6 +190,40 @@ describe('TasksBoardView Component', () => {
     // Expand completed tasks
     fireEvent.click(completedAccordion);
     expect(screen.getByText('Finished Tax Filing')).toBeInTheDocument();
+
+    // Verifies Google Tasks style completion timestamp is displayed
+    expect(screen.getByText(/Completed:/i)).toBeInTheDocument();
+
+    // Verifies description preview is displayed in card
+    expect(screen.getByText('Filed all forms before midnight')).toBeInTheDocument();
+
+    // Verifies delete button on hover is present and calls onDeleteTask
+    const deleteBtn = screen.getByLabelText('Delete task');
+    expect(deleteBtn).toBeInTheDocument();
+    fireEvent.click(deleteBtn);
+    expect(handleDeleteTask).toHaveBeenCalledWith('t-completed');
+
+    // Verifies clicking checkmark toggles task back to active
+    const checkBtn = screen.getByLabelText('Mark active');
+    expect(checkBtn).toBeInTheDocument();
+    fireEvent.click(checkBtn);
+    expect(handleToggleTask).toHaveBeenCalledWith(tasksWithCompleted[tasksWithCompleted.length - 1]);
+  });
+
+  it('correctly formats completion dates according to Google Tasks specifications', () => {
+    // Current benchmark year (2026): "Completed: <Weekday> <Day> <MonthShort>"
+    const sameYear = formatCompletedDate('2026-11-24T10:00:00Z', undefined, '2026-11-17');
+    expect(sameYear).toBe('Completed: Tue 24 Nov');
+
+    // Previous year (2024): "Completed: <Day> <MonthLong> <Year>"
+    const prevYear1 = formatCompletedDate('2024-11-17T10:00:00Z', undefined, '2026-11-17');
+    expect(prevYear1).toBe('Completed: 17 November 2024');
+
+    const prevYear2 = formatCompletedDate('2024-09-06T10:00:00Z', undefined, '2026-11-17');
+    expect(prevYear2).toBe('Completed: 6 September 2024');
+
+    // Fallback when missing
+    expect(formatCompletedDate(undefined, undefined)).toBe('Completed');
   });
 
   it('supports rearranging task boards via drag and drop', () => {

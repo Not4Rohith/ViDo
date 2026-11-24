@@ -61,6 +61,41 @@ export function formatDeadlineLabel(deadlineStr?: string | null): string {
   }
 }
 
+export function formatCompletedDate(
+  completedAt?: string,
+  fallbackDate?: string,
+  refDateStr?: string
+): string {
+  const rawDateStr = completedAt || fallbackDate;
+  if (!rawDateStr) return 'Completed';
+  try {
+    const safeDateStr = rawDateStr.includes('T') ? rawDateStr : `${rawDateStr}T12:00:00`;
+    const d = new Date(safeDateStr);
+    if (isNaN(d.getTime())) return 'Completed';
+
+    let refYear = new Date().getFullYear();
+    if (refDateStr) {
+      const parsedRef = new Date(refDateStr.includes('T') ? refDateStr : `${refDateStr}T12:00:00`);
+      if (!isNaN(parsedRef.getTime())) {
+        refYear = parsedRef.getFullYear();
+      }
+    }
+
+    const isSameYear = d.getFullYear() === refYear;
+    const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const day = d.getDate();
+    if (isSameYear) {
+      const monthShort = d.toLocaleDateString('en-US', { month: 'short' });
+      return `Completed: ${weekday} ${day} ${monthShort}`;
+    } else {
+      const monthLong = d.toLocaleDateString('en-US', { month: 'long' });
+      return `Completed: ${day} ${monthLong} ${d.getFullYear()}`;
+    }
+  } catch {
+    return 'Completed';
+  }
+}
+
 export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
   task,
   isExpanded,
@@ -192,7 +227,10 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
   return (
     <div
       ref={cardRef}
-      style={cardPriorityStyle}
+      style={{
+        ...cardPriorityStyle,
+        ...(isCompleted && !isExpanded ? { opacity: 0.9 } : {}),
+      }}
       draggable={!isExpanded && isDraggable}
       onDragStart={(e) => {
         if (isExpanded) return;
@@ -227,7 +265,9 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
       } ${
         isExpanded
           ? 'bg-[var(--surface)] border-[var(--accent)] shadow-md p-3.5 ring-1 ring-[var(--accent)]/30'
-          : 'bg-[var(--surface)] border-[var(--line)] hover:border-[var(--muted)]/40 p-2.5 cursor-grab active:cursor-grabbing shadow-2xs hover:shadow-xs'
+          : `bg-[var(--surface)] border-[var(--line)] hover:border-[var(--muted)]/40 p-2.5 ${
+              isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+            } shadow-2xs hover:shadow-xs`
       }`}
     >
       {/* Drop Target Indicators */}
@@ -251,7 +291,7 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
             aria-label={isCompleted ? 'Mark active' : 'Mark completed'}
           >
             {isCompleted ? (
-              <CheckCircle2 className="w-4.5 h-4.5 text-[var(--green)]" />
+              <CheckCircle2 className="w-4.5 h-4.5 text-[var(--green)] hover:opacity-75 transition-opacity" />
             ) : isLate ? (
               <AlertCircle className="w-4.5 h-4.5 text-rose-500 hover:text-rose-600 transition-colors" />
             ) : (
@@ -273,10 +313,17 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
             ) : (
               <p
                 className={`text-xs font-medium text-[var(--ink)] leading-snug break-words ${
-                  isCompleted ? 'line-through opacity-60' : ''
+                  isCompleted ? 'line-through opacity-70' : ''
                 }`}
               >
                 {task.title}
+              </p>
+            )}
+
+            {/* Google Tasks style completion timestamp */}
+            {isCompleted && !isExpanded && (
+              <p className="text-[11px] text-[var(--muted)] mt-0.5 font-normal">
+                {formatCompletedDate(task.completedAt, task.createdAt, referenceDateStr)}
               </p>
             )}
 
@@ -300,7 +347,11 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
 
             {/* Collapsed Pills: Date, Duration & Repeat */}
             {!isExpanded && (
-              <div className="mt-2 flex items-center space-x-1.5 flex-wrap gap-y-1">
+              <div
+                className={`mt-2 flex items-center space-x-1.5 flex-wrap gap-y-1 ${
+                  isCompleted ? 'opacity-75' : ''
+                }`}
+              >
                 {task.dueDate && (
                   <button
                     type="button"
@@ -355,71 +406,105 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
           </div>
         </div>
 
-        {/* Right Action Icons: Star & 3-Dots */}
-        <div className="flex items-center space-x-0.5 shrink-0">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleStar(task.id);
-            }}
-            aria-label={task.starred ? 'Unstar task' : 'Star task'}
-            className={`p-1 rounded-full transition-colors cursor-pointer ${
-              task.starred
-                ? 'text-amber-500'
-                : 'text-transparent group-hover:text-[var(--faint)] hover:text-amber-500'
-            }`}
-          >
-            <Star className={`w-3.5 h-3.5 ${task.starred ? 'fill-amber-500' : ''}`} />
-          </button>
-
-          {/* Options Menu */}
-          <div ref={menuRef} className="relative">
+        {/* Right Action Icons: Star & Delete on hover for Completed Tasks; Star & 3-Dots for Active */}
+        {isCompleted ? (
+          <div className="flex items-center space-x-0.5 shrink-0">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                try {
-                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                  if (window.innerHeight - rect.bottom < 80 && rect.top > 80) {
-                    setMenuOpensUpward(true);
-                  } else {
-                    setMenuOpensUpward(false);
-                  }
-                } catch {}
-                setIsMenuOpen((prev) => !prev);
+                onToggleStar(task.id);
               }}
-              aria-label="More task options"
-              aria-expanded={isMenuOpen}
-              className="p-1 rounded-full text-transparent group-hover:text-[var(--faint)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+              aria-label={task.starred ? 'Unstar task' : 'Star task'}
+              className={`p-1 rounded-full transition-colors cursor-pointer ${
+                task.starred
+                  ? 'text-amber-500'
+                  : 'text-transparent group-hover:text-[var(--faint)] hover:text-amber-500'
+              }`}
             >
-              <MoreVertical className="w-3.5 h-3.5" />
+              <Star className={`w-3.5 h-3.5 ${task.starred ? 'fill-amber-500' : ''}`} />
             </button>
-
-            {isMenuOpen && (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className={`absolute right-0 w-36 bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-xl z-30 p-1 space-y-0.5 animate-in fade-in duration-100 ${
-                  menuOpensUpward ? 'bottom-full mb-1' : 'top-full mt-1'
-                }`}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(task.id);
+                }}
+                aria-label="Delete task"
+                title="Delete task"
+                className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-[var(--muted)] hover:text-rose-600 hover:bg-rose-500/10 transition-all cursor-pointer"
               >
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onDelete(task.id);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete Task</span>
-                  </button>
-                )}
-              </div>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center space-x-0.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleStar(task.id);
+              }}
+              aria-label={task.starred ? 'Unstar task' : 'Star task'}
+              className={`p-1 rounded-full transition-colors cursor-pointer ${
+                task.starred
+                  ? 'text-amber-500'
+                  : 'text-transparent group-hover:text-[var(--faint)] hover:text-amber-500'
+              }`}
+            >
+              <Star className={`w-3.5 h-3.5 ${task.starred ? 'fill-amber-500' : ''}`} />
+            </button>
+
+            {/* Options Menu */}
+            <div ref={menuRef} className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  try {
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    if (window.innerHeight - rect.bottom < 80 && rect.top > 80) {
+                      setMenuOpensUpward(true);
+                    } else {
+                      setMenuOpensUpward(false);
+                    }
+                  } catch {}
+                  setIsMenuOpen((prev) => !prev);
+                }}
+                aria-label="More task options"
+                aria-expanded={isMenuOpen}
+                className="p-1 rounded-full text-transparent group-hover:text-[var(--faint)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+              >
+                <MoreVertical className="w-3.5 h-3.5" />
+              </button>
+
+              {isMenuOpen && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className={`absolute right-0 w-36 bg-[var(--surface)] border border-[var(--line)] rounded-xl shadow-xl z-30 p-1 space-y-0.5 animate-in fade-in duration-100 ${
+                    menuOpensUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+                  }`}
+                >
+                  {onDelete && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDelete(task.id);
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Task</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Expanded Inline Editor Body */}
