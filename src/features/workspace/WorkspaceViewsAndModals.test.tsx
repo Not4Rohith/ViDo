@@ -75,6 +75,24 @@ describe('Workspace Views and Modals', () => {
       expect(screen.getByRole('heading', { name: /personal & routine/i })).toBeInTheDocument();
     });
 
+    it('does not apply any filter by default when opening Tasks view', () => {
+      render(
+        <MemoryRouter>
+          <HomeView tasks={SAMPLE_TASKS} onTaskClick={vi.fn()} initialTab="tasks" />
+        </MemoryRouter>
+      );
+
+      // Verify no filter pills exist
+      expect(screen.queryByText(/status:/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/category:/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/priority:/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /clear all/i })).not.toBeInTheDocument();
+
+      // Verify all active non-archived tasks are listed
+      const activeTasks = SAMPLE_TASKS.filter((t) => t.state === 'active' && !t.isArchived);
+      expect(screen.getByText(new RegExp(`${activeTasks.length} tasks`, 'i'))).toBeInTheDocument();
+    });
+
     it('renders Dashboard by default and Tasks view when initialTab is tasks without in-page dual navigation', () => {
       const { rerender } = render(
         <MemoryRouter>

@@ -703,6 +703,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     tasks={tasks}
                     dashboard={dashboard}
                     initialTab="tasks"
+                    initialStatus="all"
                     statusFilter={statusFilter}
                     selectedCategories={selectedCategories}
                     priorityFilter={priorityFilter}

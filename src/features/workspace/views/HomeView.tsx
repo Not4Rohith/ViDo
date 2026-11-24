@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SampleTask, SAMPLE_TASKS } from '../../../data/sampleTasks';
 import {
   getHomeDashboardTasks,
@@ -104,6 +104,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onCleanUpOldTasks,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationStateStatus = (location.state as { status?: StatusFilter } | null)?.status;
+  const effectiveInitialStatus = navigationStateStatus ?? initialStatus;
+
   const allTasks = tasks ?? SAMPLE_TASKS;
   const todayStr = getTodayDateString();
   const currentDashboard =
@@ -437,7 +441,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   onClick={() => {
                     setStatus(dashboardCategory);
                     try {
-                      navigate(`${basePath}/tasks`);
+                      navigate(`${basePath}/tasks`, { state: { status: dashboardCategory } });
                     } catch {
                       setActiveTab('tasks');
                     }
