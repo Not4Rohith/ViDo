@@ -406,24 +406,9 @@ export const TaskBoardCard: React.FC<TaskBoardCardProps> = ({
           </div>
         </div>
 
-        {/* Right Action Icons: Star & Delete on hover for Completed Tasks; Star & 3-Dots for Active */}
+        {/* Right Action Icons: Delete on hover for Completed Tasks; Star & 3-Dots for Active */}
         {isCompleted ? (
           <div className="flex items-center space-x-0.5 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleStar(task.id);
-              }}
-              aria-label={task.starred ? 'Unstar task' : 'Star task'}
-              className={`p-1 rounded-full transition-colors cursor-pointer ${
-                task.starred
-                  ? 'text-amber-500'
-                  : 'text-transparent group-hover:text-[var(--faint)] hover:text-amber-500'
-              }`}
-            >
-              <Star className={`w-3.5 h-3.5 ${task.starred ? 'fill-amber-500' : ''}`} />
-            </button>
             {onDelete && (
               <button
                 type="button"

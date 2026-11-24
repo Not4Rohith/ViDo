@@ -203,6 +203,10 @@ describe('TasksBoardView Component', () => {
     fireEvent.click(deleteBtn);
     expect(handleDeleteTask).toHaveBeenCalledWith('t-completed');
 
+    // Verifies that completed tasks do not have a star button
+    const completedCard = screen.getByText('Finished Tax Filing').closest('.group')!;
+    expect(completedCard.querySelector('button[aria-label*="star"]')).toBeNull();
+
     // Verifies clicking checkmark toggles task back to active
     const checkBtn = screen.getByLabelText('Mark active');
     expect(checkBtn).toBeInTheDocument();
