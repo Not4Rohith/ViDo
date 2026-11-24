@@ -1,11 +1,23 @@
 export type TaskPriority = 'high' | 'medium' | 'low';
-export type TaskCategory = 'personal' | 'home' | 'work';
+export type TaskCategory = 'personal' | 'home' | 'work' | (string & {});
 export type TaskState = 'active' | 'completed';
 
 export interface TaskCheckpoint {
   id: string;
   timestamp: string;
   note: string;
+}
+
+export interface TaskSubtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface TaskRecurrenceRule {
+  enabled: boolean;
+  rule: string | null;
+  timezone?: string;
 }
 
 export interface SampleTask {
@@ -15,6 +27,7 @@ export interface SampleTask {
   startDate?: string; // YYYY-MM-DD (optional, defaults to createdAt)
   dueDate: string; // YYYY-MM-DD
   dueTime?: string; // HH:mm
+  deadline?: string; // YYYY-MM-DD or YYYY-MM-DD HH:mm
   priority?: TaskPriority;
   state: TaskState;
   category: TaskCategory;
@@ -22,6 +35,10 @@ export interface SampleTask {
   completedAt?: string;
   isArchived?: boolean;
   checkpoints?: TaskCheckpoint[];
+  starred?: boolean;
+  subtasks?: TaskSubtask[];
+  recurrence?: TaskRecurrenceRule;
+  estimatedMinutes?: number;
 }
 
 export const BENCHMARK_DATE_STR = '2026-11-17';
@@ -39,6 +56,13 @@ export const SAMPLE_TASKS: SampleTask[] = [
     state: 'active',
     category: 'work',
     createdAt: '2026-11-14T09:00:00Z',
+    starred: true,
+    estimatedMinutes: 60,
+    subtasks: [
+      { id: 'st-1', title: 'Verify payroll projections', completed: true },
+      { id: 'st-2', title: 'Collect spreadsheets from finance team', completed: true },
+      { id: 'st-3', title: 'Present runway report to stakeholders', completed: false },
+    ],
     checkpoints: [
       { id: 'cp-1', timestamp: '2026-11-15T11:00:00Z', note: 'Draft spreadsheets collected from finance team.' },
       { id: 'cp-2', timestamp: '2026-11-16T15:30:00Z', note: 'Initial discrepancies addressed in payroll projections.' },
@@ -54,6 +78,11 @@ export const SAMPLE_TASKS: SampleTask[] = [
     state: 'active',
     category: 'personal',
     createdAt: '2026-11-12T10:00:00Z',
+    estimatedMinutes: 20,
+    subtasks: [
+      { id: 'st-4', title: 'Find emissions test document', completed: true },
+      { id: 'st-5', title: 'Pay registration fee online', completed: false },
+    ],
   },
   {
     id: 'task-today-3',
@@ -65,6 +94,11 @@ export const SAMPLE_TASKS: SampleTask[] = [
     state: 'active',
     category: 'home',
     createdAt: '2026-11-10T14:00:00Z',
+    estimatedMinutes: 15,
+    recurrence: {
+      enabled: true,
+      rule: 'FREQ=YEARLY;INTERVAL=1',
+    },
   },
   {
     id: 'task-today-4',
@@ -76,6 +110,12 @@ export const SAMPLE_TASKS: SampleTask[] = [
     state: 'active',
     category: 'work',
     createdAt: '2026-11-16T08:30:00Z',
+    starred: true,
+    estimatedMinutes: 90,
+    recurrence: {
+      enabled: true,
+      rule: 'FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR',
+    },
   },
   {
     id: 'task-today-5',

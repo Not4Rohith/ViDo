@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   CheckSquare,
   CalendarDays,
   BarChart3,
-  Palette,
+  Settings,
   Plus,
   LogOut,
   Users,
@@ -340,13 +340,19 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           </div>
         )}
 
-        <Link
-          to="/style-lab"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+        <NavLink
+          to={`${basePath}/settings`}
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+              isActive
+                ? 'bg-white/15 text-white shadow-xs'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`
+          }
         >
-          <Palette className="w-4 h-4" />
-          <span>Themes</span>
-        </Link>
+          <Settings className="w-4 h-4" />
+          <span>Settings</span>
+        </NavLink>
 
         {onSignOut && (
           <button

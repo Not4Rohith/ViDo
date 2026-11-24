@@ -19,16 +19,25 @@ import { getFilteredTasks, buildHomeDashboard } from '../../data/taskFilters';
 import { getTodayDateString } from '../../utils/dateUtils';
 import { todayISO } from '../../data/calendar';
 import { WorkspaceSidebar } from './WorkspaceSidebar';
-import { WorkspaceTopBar } from './WorkspaceTopBar';
+import {
+  WorkspaceTopBar,
+  StatusFilter,
+  PriorityFilter,
+} from './WorkspaceTopBar';
 import { HomeView } from './views/HomeView';
 import { ListView } from './views/ListView';
 import { CalendarView } from './views/CalendarView';
 import { AnalyticsView } from './views/AnalyticsView';
+import { SettingsView } from './views/SettingsView';
 import { NotFoundView } from './views/NotFoundView';
 import { TaskDetailModal } from './TaskDetailModal';
 import { TaskCreateModal } from './TaskCreateModal';
 import { useAuth } from '../auth';
 import { TeamSpaceView } from '../teams/TeamSpaceView';
+import {
+  PriorityColors,
+  DEFAULT_PRIORITY_COLORS,
+} from '../../utils/priorityColor';
 import { CreateTeamModal } from '../teams/CreateTeamModal';
 import { getTeamRepository } from '../teams/teamRepository';
 import { Team } from '../teams/types';
@@ -68,6 +77,7 @@ export const isKnownWorkspacePath = (pathname: string, basePath: string): boolea
     'archived',
     'calendar',
     'analytics',
+    'settings',
   ]);
 
   if (exactKnownSubPaths.has(subPath)) return true;
@@ -280,11 +290,224 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const handleUpdateTask = (taskId: string, updates: Partial<SampleTask>) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t))
+    );
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask((prev) => (prev ? { ...prev, ...updates } : null));
+    }
+  };
+
+  const handleToggleStar = (taskId: string) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, starred: !t.starred } : t))
+    );
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setToastMessage('Task deleted.');
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const DEFAULT_CUSTOM_LISTS = [
+    { id: 'personal', title: 'Personal & Routine' },
+    { id: 'home', title: 'Household & Living' },
+    { id: 'work', title: 'Work & Professional' },
+  ];
+
+  const [customLists, setCustomLists] = useState(() => {
+    try {
+      const key = authUser ? `vido_custom_lists_${authUser.uid}` : 'vido_custom_lists_demo';
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_CUSTOM_LISTS;
+  });
+
+  useEffect(() => {
+    try {
+      const key = authUser ? `vido_custom_lists_${authUser.uid}` : 'vido_custom_lists_demo';
+      localStorage.setItem(key, JSON.stringify(customLists));
+    } catch {}
+  }, [customLists, authUser?.uid]);
+
+  const handleCreateList = (title: string) => {
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `list-${Date.now()}`;
+    const id = customLists.some((l) => l.id === slug) ? `${slug}-${Date.now()}` : slug;
+    setCustomLists((prev) => [...prev, { id, title }]);
+    setToastMessage(`List "${title}" created.`);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleRenameList = (listId: string, newTitle: string) => {
+    setCustomLists((prev) =>
+      prev.map((l) => (l.id === listId ? { ...l, title: newTitle } : l))
+    );
+  };
+
+  const handleDeleteList = (listId: string) => {
+    setCustomLists((prev) => prev.filter((l) => l.id !== listId));
+    const fallbackListId = customLists.find((l) => l.id !== listId)?.id || 'personal';
+    setTasks((prev) =>
+      prev.map((t) => (t.category === listId ? { ...t, category: fallbackListId as any } : t))
+    );
+    setToastMessage('List deleted.');
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleReorderLists = (newOrder: { id: string; title: string }[]) => {
+    setCustomLists(newOrder);
+  };
+
+  const handleQuickAddTask = (
+    category: string,
+    title: string,
+    options?: {
+      description?: string;
+      dueDate?: string;
+      dueTime?: string;
+      deadline?: string;
+      priority?: 'high' | 'medium' | 'low';
+      starred?: boolean;
+    }
+  ) => {
+    const newTask: SampleTask = {
+      id: `task-${Date.now()}`,
+      title: title.trim(),
+      description: options?.description?.trim() || undefined,
+      dueDate: options?.dueDate || '',
+      dueTime: options?.dueTime || undefined,
+      deadline: options?.deadline || undefined,
+      priority: options?.priority || 'low',
+      starred: Boolean(options?.starred),
+      state: 'active',
+      category: (category as any) || 'personal',
+      createdAt: new Date().toISOString(),
+    };
+    setTasks((prev) => [newTask, ...prev]);
+    setToastMessage(`Task "${title}" added to ${category}.`);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleMoveTask = (
+    taskId: string,
+    targetCategory: string,
+    targetTaskId?: string,
+    position?: 'before' | 'after'
+  ) => {
+    setTasks((prev) => {
+      const taskIndex = prev.findIndex((t) => t.id === taskId);
+      if (taskIndex === -1) return prev;
+
+      const taskToMove = prev[taskIndex];
+      const updatedTask: SampleTask = {
+        ...taskToMove,
+        category: targetCategory as any,
+      };
+
+      const withoutTask = prev.filter((t) => t.id !== taskId);
+
+      if (targetTaskId && targetTaskId !== taskId) {
+        const targetIndex = withoutTask.findIndex((t) => t.id === targetTaskId);
+        if (targetIndex !== -1) {
+          const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+          const next = [...withoutTask];
+          next.splice(insertIndex, 0, updatedTask);
+          return next;
+        }
+      }
+
+      const lastIndexInTarget = withoutTask.reduce(
+        (last, t, idx) => (t.category === targetCategory ? idx : last),
+        -1
+      );
+
+      if (lastIndexInTarget !== -1) {
+        const next = [...withoutTask];
+        next.splice(lastIndexInTarget + 1, 0, updatedTask);
+        return next;
+      }
+
+      return [...withoutTask, updatedTask];
+    });
+  };
+
+  const handleDeleteCompletedTasks = (columnId: string) => {
+    setTasks((prev) =>
+      prev.filter((t) => !(t.category === columnId && t.state === 'completed'))
+    );
+    setToastMessage('Completed tasks deleted.');
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleCleanUpOldTasks = (columnId: string) => {
+    setTasks((prev) =>
+      prev.filter((t) => {
+        if (t.category !== columnId) return true;
+        if (t.state === 'completed') return true;
+        const isOld = Boolean(
+          (t.dueDate && t.dueDate < referenceDate) ||
+          (!t.dueDate && t.createdAt && t.createdAt.slice(0, 10) < referenceDate)
+        );
+        return !isOld;
+      })
+    );
+    setToastMessage('Old uncompleted tasks cleaned up.');
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
   const handleSignOut = () => {
     if (!isPreview) {
       void signOut();
     }
     navigate('/');
+  };
+
+  // Filter state for WorkspaceTopBar and HomeView
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
+
+  // Custom priority colors state
+  const [priorityColors, setPriorityColors] = useState<PriorityColors>(() => {
+    try {
+      const key = authUser ? `vido_priority_colors_${authUser.uid}` : 'vido_priority_colors_demo';
+      const saved = localStorage.getItem(key);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_PRIORITY_COLORS;
+  });
+
+  useEffect(() => {
+    try {
+      const key = authUser ? `vido_priority_colors_${authUser.uid}` : 'vido_priority_colors_demo';
+      localStorage.setItem(key, JSON.stringify(priorityColors));
+    } catch {}
+  }, [priorityColors, authUser?.uid]);
+
+  const handleToggleStatusFilter = (status: StatusFilter) => {
+    setStatusFilter((prev) => (prev === status ? 'all' : status));
+  };
+
+  const handleToggleCategoryFilter = (cat: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((id) => id !== cat) : [...prev, cat]
+    );
+  };
+
+  const handleTogglePriorityFilter = (pri: PriorityFilter) => {
+    setPriorityFilter((prev) => (prev === pri ? 'all' : pri));
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter('all');
+    setSelectedCategories([]);
+    setPriorityFilter('all');
   };
 
   const getHeaderInfo = () => {
@@ -327,6 +550,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         subtitle: 'Weekly completion, targets, and monthly goal progress',
       };
     }
+    if (path.endsWith('/settings')) {
+      return {
+        title: 'Settings',
+        subtitle: 'Customize themes, priority colors, and workspace preferences',
+      };
+    }
     if (path.includes('/team/')) {
       const activeTeamId = path.split('/team/')[1]?.split('/')[0];
       const currentTeam = teams.find((t) => t.id === activeTeamId);
@@ -345,9 +574,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   };
 
   const headerInfo = getHeaderInfo();
+  const isTasksRoute = location.pathname.endsWith('/tasks') || location.pathname.endsWith('/settings');
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--canvas)] text-[var(--ink)] antialiased">
+    <div className="flex flex-col h-screen overflow-hidden bg-[var(--canvas)] text-[var(--ink)] antialiased">
       {/* 1. Global Persistent Demo Preview Notice Bar - ONLY in Preview mode */}
       {isPreview && (
         <aside
@@ -415,7 +645,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <WorkspaceTopBar
             title={headerInfo.title}
             subtitle={headerInfo.subtitle}
@@ -423,6 +653,15 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             user={user}
             authMode={authMode}
             onSignOut={handleSignOut}
+            statusFilter={statusFilter}
+            categoryFilter={selectedCategories[0] || 'all'}
+            selectedCategories={selectedCategories}
+            priorityFilter={priorityFilter}
+            onToggleStatusFilter={handleToggleStatusFilter}
+            onToggleCategoryFilter={handleToggleCategoryFilter}
+            onTogglePriorityFilter={handleTogglePriorityFilter}
+            onClearFilters={handleClearFilters}
+            customLists={customLists}
             onRespondInvitation={async (invitationId, accept) => {
               const repo = getTeamRepository();
               await repo.respondToInvitation(invitationId, accept, user);
@@ -432,7 +671,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             }}
           />
 
-          <main className="flex-1 overflow-y-auto">
+          <main className={`flex-1 min-h-0 flex flex-col ${isTasksRoute ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             <Routes>
               <Route
                 index
@@ -464,9 +703,27 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     tasks={tasks}
                     dashboard={dashboard}
                     initialTab="tasks"
+                    statusFilter={statusFilter}
+                    selectedCategories={selectedCategories}
+                    priorityFilter={priorityFilter}
+                    priorityColors={priorityColors}
+                    onStatusFilterChange={setStatusFilter}
+                    onClearFilters={handleClearFilters}
                     onTaskClick={handleTaskClick}
                     onToggleTask={handleToggleTask}
                     onNewTaskClick={() => setIsCreateOpen(true)}
+                    onUpdateTask={handleUpdateTask}
+                    onDeleteTask={handleDeleteTask}
+                    onToggleStar={handleToggleStar}
+                    onQuickAddTask={handleQuickAddTask}
+                    customLists={customLists}
+                    onCreateList={handleCreateList}
+                    onRenameList={handleRenameList}
+                    onDeleteList={handleDeleteList}
+                    onReorderLists={handleReorderLists}
+                    onMoveTask={handleMoveTask}
+                    onDeleteCompletedTasks={handleDeleteCompletedTasks}
+                    onCleanUpOldTasks={handleCleanUpOldTasks}
                   />
                 }
               />
@@ -571,6 +828,21 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     }}
                     referenceDate={referenceDate}
                     mode={isLive ? 'live' : 'demo'}
+                  />
+                }
+              />
+              <Route
+                path="settings"
+                element={
+                  <SettingsView
+                    priorityColors={priorityColors}
+                    onUpdatePriorityColors={setPriorityColors}
+                    user={user}
+                    isPreview={isPreview}
+                    customLists={customLists}
+                    onCreateList={handleCreateList}
+                    onRenameList={handleRenameList}
+                    onDeleteList={handleDeleteList}
                   />
                 }
               />

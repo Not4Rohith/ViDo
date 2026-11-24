@@ -25,7 +25,7 @@ describe('WorkspaceSidebar', () => {
     expect(screen.getByRole('link', { name: /tasks 15/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /calendar/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /analytics/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /themes/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
   });
 
   it('triggers new task callback when button is clicked', () => {
