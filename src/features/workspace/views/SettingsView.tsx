@@ -9,7 +9,6 @@ import {
   Sparkles,
   LogOut,
   RotateCcw,
-  Tag,
   Plus,
   Trash2,
   Search,
@@ -17,7 +16,6 @@ import {
   ListPlus,
   Edit2,
   X,
-  Folder,
 } from 'lucide-react';
 import { Button, Badge, Input } from '../../../components/ui';
 import {
@@ -110,16 +108,10 @@ export const SETTINGS_SECTIONS: SettingsSectionItem[] = [
     description: 'Board task card priority color coding',
   },
   {
-    id: 'lists',
-    label: 'Task Lists',
-    icon: ListPlus,
-    description: 'Create, rename & manage board lists',
-  },
-  {
     id: 'categories',
-    label: 'Personalised Categories',
-    icon: Tag,
-    description: 'Custom categories stored in your database',
+    label: 'Task Lists & Categories',
+    icon: ListPlus,
+    description: 'Create, rename & manage board lists and categories',
   },
   {
     id: 'preferences',
@@ -179,23 +171,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   // Task Lists state
   const [newListTitle, setNewListTitle] = useState('');
-  const [listSuccessMsg, setListSuccessMsg] = useState<string | null>(null);
+  const [listSuccessMsg] = useState<string | null>(null);
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editingListTitle, setEditingListTitle] = useState('');
 
   const allLists = customLists && customLists.length > 0 ? customLists : DEFAULT_LISTS;
-
-  const handleCreateNewList = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newListTitle.trim();
-    if (!trimmed) return;
-    if (onCreateList) {
-      onCreateList(trimmed);
-    }
-    setNewListTitle('');
-    setListSuccessMsg(`List "${trimmed}" created successfully!`);
-    setTimeout(() => setListSuccessMsg(null), 3000);
-  };
 
   const handleStartRename = (list: CustomListDefinition) => {
     setEditingListId(list.id);
@@ -329,23 +309,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setTimeout(() => setPrefsSaved(false), 3000);
   };
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newCatName.trim();
-    if (!trimmed) return;
-
-    if (onAddCategory) {
-      try {
-        await onAddCategory({ name: trimmed, color: selectedColor });
-        setNewCatName('');
-        setCatCreationNotice(`Category "${trimmed}" saved to your personal database.`);
-        setTimeout(() => setCatCreationNotice(null), 3000);
-      } catch (err: any) {
-        setCatCreationNotice(err?.message || 'Failed to create category.');
-      }
-    }
-  };
-
   const handleDeleteCustomCategory = async (catId: string, catName: string) => {
     if (window.confirm(`Delete the custom category "${catName}"?`)) {
       if (onDeleteCategory) {
@@ -431,7 +394,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               type="button"
               data-testid="sidebar-add-list-btn"
-              onClick={() => setActiveSection('lists')}
+              onClick={() => setActiveSection('categories')}
               className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--accent)] bg-[var(--accent-soft)]/60 hover:bg-[var(--accent-soft)] transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -603,35 +566,68 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </section>
           )}
 
-          {/* SECTION 3: Categories */}
-          {activeSection === 'categories' && (
-            <section aria-labelledby="custom-categories-heading" className="space-y-6 animate-in fade-in duration-150">
-              <div>
-                <h2 id="custom-categories-heading" className="text-2xl font-bold tracking-tight text-[var(--ink)]">
-                  Personalised Categories
-                </h2>
-                <p className="text-sm text-[var(--muted)] mt-1">
-                  Create user-specific categories stored in your personal database. These appear throughout your workspace, filter menus, and task forms.
-                </p>
-              </div>
+          {/* SECTION 3: Unified Task Lists & Personalised Categories */}
+          {(activeSection === 'categories' || activeSection === 'lists') && (() => {
+            const catColorMap = new Map(categories.map((c) => [c.id, c.color]));
+            const catCustomMap = new Map(categories.map((c) => [c.id, c.isCustom]));
+            const mergedItems: Array<{ id: string; title: string; color?: string; isCustom?: boolean }> = [
+              ...allLists.map((l) => ({
+                id: l.id,
+                title: l.title,
+                color: catColorMap.get(l.id),
+                isCustom: catCustomMap.get(l.id),
+              })),
+            ];
+            categories.forEach((c) => {
+              if (!mergedItems.some((m) => m.id === c.id)) {
+                mergedItems.push({ id: c.id, title: c.name, color: c.color, isCustom: c.isCustom });
+              }
+            });
 
-              {/* Create Category Form */}
-              {onAddCategory && (
+            return (
+              <section aria-labelledby="custom-categories-heading" className="space-y-6 animate-in fade-in duration-150">
+                <div>
+                  <h2 id="custom-categories-heading" className="text-2xl font-bold tracking-tight text-[var(--ink)]">
+                    Task Lists & Categories
+                  </h2>
+                  <p className="text-sm text-[var(--muted)] mt-1">
+                    Create, rename, and manage your board lists and categories. Changes sync across your task boards, filter menus, and task creation forms.
+                  </p>
+                </div>
+
+                {/* Create List / Category Form */}
                 <form
-                  onSubmit={handleCreateCategory}
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const trimmed = (newCatName || newListTitle).trim();
+                    if (!trimmed) return;
+                    if (onCreateList) {
+                      onCreateList(trimmed);
+                    }
+                    if (onAddCategory) {
+                      await onAddCategory({ name: trimmed, color: selectedColor });
+                    }
+                    setNewCatName('');
+                    setNewListTitle('');
+                    setCatCreationNotice(`"${trimmed}" created successfully!`);
+                    setTimeout(() => setCatCreationNotice(null), 3000);
+                  }}
                   className="p-6 rounded-2xl border border-[var(--line)] bg-[var(--surface)] space-y-4"
                 >
                   <h3 className="text-base font-bold text-[var(--ink)] flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-[var(--accent)]" /> Add New Category
+                    <Plus className="w-4 h-4 text-[var(--accent)]" /> Add New List / Category
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                     <div className="sm:col-span-2">
                       <Input
-                        label="Category Name *"
-                        placeholder="e.g., Health & Wellness, Finance, Research"
+                        label="List / Category Name *"
+                        placeholder="e.g., Project Apollo, Health & Wellness, Finance"
                         value={newCatName}
-                        onChange={(e) => setNewCatName(e.target.value)}
+                        onChange={(e) => {
+                          setNewCatName(e.target.value);
+                          setNewListTitle(e.target.value);
+                        }}
                         required
                       />
                     </div>
@@ -661,77 +657,120 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                   <div className="flex items-center justify-between pt-1">
                     <div>
-                      {catCreationNotice && (
+                      {(catCreationNotice || listSuccessMsg) && (
                         <span className="text-sm font-semibold text-emerald-600 flex items-center gap-1.5 animate-in fade-in duration-150">
-                          <CheckCircle2 className="w-4 h-4" /> {catCreationNotice}
+                          <CheckCircle2 className="w-4 h-4" /> {catCreationNotice || listSuccessMsg}
                         </span>
                       )}
                     </div>
                     <Button
                       type="submit"
+                      data-testid="create-list-submit-btn"
                       variant="primary"
                       size="md"
                       disabled={!newCatName.trim()}
                       className="px-5 py-2.5 text-sm font-semibold"
                     >
-                      Create Category
+                      Add List / Category
                     </Button>
                   </div>
                 </form>
-              )}
 
-              {/* Categories List */}
-              <div className="p-6 rounded-2xl border border-[var(--line)] bg-[var(--surface)] space-y-3">
-                <h3 className="text-base font-bold text-[var(--ink)] mb-3">
-                  Active Categories ({categories.length})
-                </h3>
+                {/* Unified Lists & Categories Directory */}
+                <div className="p-6 rounded-2xl border border-[var(--line)] bg-[var(--surface)] space-y-3">
+                  <h3 className="text-base font-bold text-[var(--ink)] mb-3">
+                    Active Lists & Categories ({mergedItems.length})
+                  </h3>
 
-                <div className="divide-y divide-[var(--line)]">
-                  {categories.map((cat) => (
-                    <div key={cat.id} className="py-3 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span
-                          className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
-                          style={{ backgroundColor: cat.color || '#305fdd' }}
-                        />
-                        <div>
-                          <span className="font-semibold text-sm text-[var(--ink)] block truncate">
-                            {cat.name}
-                          </span>
-                          <span className="text-xs font-mono text-[var(--faint)] block">
-                            id: {cat.id}
-                          </span>
+                  <div className="divide-y divide-[var(--line)]">
+                    {mergedItems.map((item) => {
+                      const isEditing = editingListId === item.id;
+
+                      return (
+                        <div key={item.id} className="py-3 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span
+                              className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                              style={{ backgroundColor: item.color || '#305fdd' }}
+                            />
+                            {isEditing ? (
+                              <div className="flex items-center gap-2 flex-1">
+                                <input
+                                  type="text"
+                                  value={editingListTitle}
+                                  autoFocus
+                                  onChange={(e) => setEditingListTitle(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveRename(item.id);
+                                    if (e.key === 'Escape') handleCancelRename();
+                                  }}
+                                  className="w-full max-w-xs bg-[var(--canvas)] border border-[var(--line)] rounded-lg px-2.5 py-1 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--accent)]"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveRename(item.id)}
+                                  className="p-1.5 text-white bg-[var(--accent)] hover:opacity-90 rounded-md text-xs cursor-pointer"
+                                  title="Save"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancelRename}
+                                  className="p-1.5 text-[var(--muted)] hover:text-[var(--ink)] bg-[var(--canvas)] rounded-md text-xs cursor-pointer"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="min-w-0">
+                                <span className="font-semibold text-sm text-[var(--ink)] block truncate">
+                                  {item.title}
+                                </span>
+                                <span className="text-xs font-mono text-[var(--faint)] block">
+                                  id: {item.id}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {!isEditing && onRenameList && (
+                              <button
+                                type="button"
+                                onClick={() => handleStartRename({ id: item.id, title: item.title })}
+                                className="p-1.5 text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--canvas)] rounded-lg transition-all cursor-pointer"
+                                title="Rename List"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {(onDeleteList || (item.isCustom && onDeleteCategory)) && (
+                              <button
+                                type="button"
+                                aria-label={`Delete ${item.title} list`}
+                                title="Delete List"
+                                onClick={() => {
+                                  if (onDeleteList) handleDeleteCustomList(item.id);
+                                  if (onDeleteCategory && item.isCustom) {
+                                    void handleDeleteCustomCategory(item.id, item.title);
+                                  }
+                                }}
+                                className="p-1.5 text-[var(--muted)] hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {cat.isCustom ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20">
-                            Personalized
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[var(--canvas)] text-[var(--muted)] border border-[var(--line)]">
-                            System Default
-                          </span>
-                        )}
-
-                        {cat.isCustom && onDeleteCategory && (
-                          <button
-                            type="button"
-                            aria-label={`Delete ${cat.name} category`}
-                            onClick={() => handleDeleteCustomCategory(cat.id, cat.name)}
-                            className="p-1.5 text-[var(--muted)] hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </section>
-          )}
+              </section>
+            );
+          })()}
 
           {/* SECTION 4: Preferences */}
           {activeSection === 'preferences' && (
@@ -1125,153 +1164,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* SECTION: Task Lists & Boards */}
-          {activeSection === 'lists' && (
-            <div className="max-w-4xl space-y-6 animate-in fade-in duration-150">
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-[var(--ink)]">Task Lists & Boards</h2>
-                <p className="text-xs text-[var(--muted)] mt-1">
-                  Manage and create custom board columns to organize your tasks.
-                </p>
-              </div>
-
-              {listSuccessMsg && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
-                  <Check className="w-4 h-4 shrink-0" />
-                  <span>{listSuccessMsg}</span>
-                </div>
-              )}
-
-              <section className="bg-[var(--surface)] border border-[var(--line)] rounded-2xl p-5 shadow-xs space-y-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center shrink-0">
-                    <ListPlus className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[var(--ink)]">Create a New Board / List</h3>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">
-                      Add a new category list that will appear across your tasks board and filters.
-                    </p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleCreateNewList} className="flex flex-col sm:flex-row gap-2.5 pt-1">
-                  <input
-                    id="new-list-input"
-                    type="text"
-                    value={newListTitle}
-                    onChange={(e) => setNewListTitle(e.target.value)}
-                    placeholder="Enter list title (e.g. Project Apollo, College CIE, Gym & Fitness)..."
-                    className="flex-1 bg-[var(--canvas)] border border-[var(--line)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--ink)] placeholder-[var(--faint)] focus:outline-none focus:border-[var(--accent)] transition-all"
-                  />
-                  <button
-                    type="submit"
-                    data-testid="create-list-submit-btn"
-                    disabled={!newListTitle.trim()}
-                    className="px-4 py-2.5 bg-[var(--accent)] hover:opacity-90 disabled:opacity-40 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add list</span>
-                  </button>
-                </form>
-              </section>
-
-              <section className="bg-[var(--surface)] border border-[var(--line)] rounded-2xl p-5 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
-                  <div>
-                    <h3 className="text-sm font-bold text-[var(--ink)]">Active Lists & Boards</h3>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">
-                      {allLists.length} {allLists.length === 1 ? 'list' : 'lists'} configured in your workspace
-                    </p>
-                  </div>
-                </div>
-
-                <div className="divide-y divide-[var(--line)]">
-                  {allLists.map((list) => {
-                    const isEditing = editingListId === list.id;
-
-                    return (
-                      <div
-                        key={list.id}
-                        className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-8 h-8 rounded-lg bg-[var(--canvas)] border border-[var(--line)] flex items-center justify-center shrink-0 text-[var(--muted)]">
-                            <Folder className="w-4 h-4" />
-                          </div>
-
-                          {isEditing ? (
-                            <div className="flex items-center gap-2 flex-1">
-                              <input
-                                type="text"
-                                value={editingListTitle}
-                                autoFocus
-                                onChange={(e) => setEditingListTitle(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSaveRename(list.id);
-                                  if (e.key === 'Escape') handleCancelRename();
-                                }}
-                                className="w-full max-w-xs bg-[var(--canvas)] border border-[var(--line)] rounded-lg px-2.5 py-1 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--accent)]"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleSaveRename(list.id)}
-                                className="p-1.5 text-white bg-[var(--accent)] hover:opacity-90 rounded-md text-xs cursor-pointer"
-                                title="Save"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleCancelRename}
-                                className="p-1.5 text-[var(--muted)] hover:text-[var(--ink)] bg-[var(--canvas)] rounded-md text-xs cursor-pointer"
-                                title="Cancel"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-[var(--ink)] truncate">
-                                  {list.title}
-                                </span>
-                              </div>
-                              <span className="text-[10px] text-[var(--faint)] block mt-0.5">
-                                ID: {list.id}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                          {!isEditing && (
-                            <button
-                              type="button"
-                              onClick={() => handleStartRename(list)}
-                              className="p-1.5 text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--canvas)] rounded-lg transition-all cursor-pointer"
-                              title="Rename List"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCustomList(list.id)}
-                            className="p-1.5 text-[var(--muted)] hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
-                            title="Delete List"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
             </div>
           )}
         </div>

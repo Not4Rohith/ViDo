@@ -354,6 +354,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `list-${Date.now()}`;
     const id = customLists.some((l) => l.id === slug) ? `${slug}-${Date.now()}` : slug;
     setCustomLists((prev) => [...prev, { id, title }]);
+    void categoriesState.addCategory({ name: title });
     setToastMessage(`List "${title}" created.`);
     setTimeout(() => setToastMessage(null), 2500);
   };
@@ -366,12 +367,26 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
   const handleDeleteList = (listId: string) => {
     setCustomLists((prev) => prev.filter((l) => l.id !== listId));
+    void categoriesState.deleteCategory(listId);
     const fallbackListId = customLists.find((l) => l.id !== listId)?.id || 'personal';
     setTasks((prev) =>
       prev.map((t) => (t.category === listId ? { ...t, category: fallbackListId as any } : t))
     );
     setToastMessage('List deleted.');
     setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleAddCategory = async (params: { name: string; color?: string }) => {
+    const created = await categoriesState.addCategory(params);
+    setCustomLists((prev) =>
+      prev.some((l) => l.id === created.id) ? prev : [...prev, { id: created.id, title: created.name }]
+    );
+    return created;
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    await categoriesState.deleteCategory(categoryId);
+    setCustomLists((prev) => prev.filter((l) => l.id !== categoryId));
   };
 
   const handleReorderLists = (newOrder: { id: string; title: string }[]) => {
@@ -798,6 +813,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     onUpdatePriorityColors={setPriorityColors}
                     user={user}
                     isPreview={isPreview}
+                    categories={categoriesState.categories}
+                    onAddCategory={handleAddCategory}
+                    onDeleteCategory={handleDeleteCategory}
                     customLists={customLists}
                     onCreateList={handleCreateList}
                     onRenameList={handleRenameList}
@@ -818,8 +836,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         isPreview={isPreview}
         user={user}
         categories={categoriesState.categories}
-        onAddCategory={categoriesState.addCategory}
-        onDeleteCategory={categoriesState.deleteCategory}
+        onAddCategory={handleAddCategory}
+        onDeleteCategory={handleDeleteCategory}
         onSignOut={handleSignOut}
         priorityColors={priorityColors}
         onUpdatePriorityColors={setPriorityColors}
@@ -845,7 +863,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         onClose={() => setIsCreateOpen(false)}
         onCreateTask={handleCreateTask}
         categories={categoriesState.categories}
-        onAddCategory={categoriesState.addCategory}
+        onAddCategory={handleAddCategory}
       />
 
       <CreateTeamModal
