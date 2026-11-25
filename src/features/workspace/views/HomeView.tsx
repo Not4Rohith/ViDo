@@ -21,6 +21,7 @@ import {
   Plus,
   ArrowRight,
 } from 'lucide-react';
+import { DEFAULT_CATEGORIES, type UserCategory } from '../../../data/categories';
 
 export interface HomeViewProps {
   isPreview?: boolean;
@@ -30,6 +31,7 @@ export interface HomeViewProps {
     email?: string;
   };
   tasks?: SampleTask[];
+  categories?: UserCategory[];
   dashboard?: HomeDashboardTasks;
   initialTab?: 'dashboard' | 'tasks';
   initialStatus?: 'today' | 'needsAttention' | 'upcoming' | 'completed' | 'all';
@@ -77,6 +79,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   basePath = '/preview',
   user,
   tasks,
+  categories: _categories = DEFAULT_CATEGORIES,
   dashboard,
   initialTab = 'dashboard',
   initialStatus = 'all',
@@ -257,16 +260,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] font-mono tracking-wider uppercase font-semibold text-gray-400 flex items-center gap-1.5">
+                    <span className="text-xs font-mono tracking-wider uppercase font-semibold text-gray-400 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
                       {isPreview ? 'Tuesday, 17 November 2026' : formatTopBarDate()}
                     </span>
                     {isPreview ? (
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-400 text-amber-950 shadow-xs">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-400 text-amber-950 shadow-xs">
                         Sample Data
                       </span>
                     ) : (
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         Personal Workspace
                       </span>
                     )}
@@ -285,7 +288,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       </span>
                     )}
                   </h1>
-                  <p className="text-xs sm:text-sm text-gray-300 mt-1 max-w-xl">
+                  <p className="text-sm text-gray-300 mt-1.5 max-w-xl">
                     Here is your focused daily workload snapshot. Select an area below to inspect its tasks.
                   </p>
                 </div>
@@ -295,7 +298,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     variant="primary"
                     size="sm"
                     onClick={onNewTaskClick}
-                    className="self-start sm:self-auto gap-1.5 shadow-md"
+                    className="self-start sm:self-auto gap-1.5 shadow-md text-sm py-2 px-3.5"
                   >
                     <Plus className="w-4 h-4" /> New Task
                   </Button>
@@ -313,24 +316,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     (e.key === 'Enter' || e.key === ' ') && setDashboardCategory('today')
                   }
                   aria-label={`View Today tasks (${currentDashboard.today.totalCount})`}
-                  className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                  className={`p-4 sm:p-5 rounded-xl cursor-pointer transition-all border ${
                     dashboardCategory === 'today'
                       ? 'bg-white/15 border-white/40 ring-2 ring-white/30 shadow-md'
                       : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                    <span className="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
                       <Clock className="w-4 h-4 text-[var(--accent)]" /> Today
                     </span>
                     {dashboardCategory === 'today' && (
                       <span className="w-2 h-2 rounded-full bg-[var(--accent)]" />
                     )}
                   </div>
-                  <div className="text-2xl font-black tracking-tight text-white">
+                  <div className="text-3xl font-black tracking-tight text-white">
                     {currentDashboard.today.totalCount}
                   </div>
-                  <span className="text-[11px] text-gray-400 mt-0.5 block">Due by end of day</span>
+                  <span className="text-sm text-gray-300 mt-1 block">Due by end of day</span>
                 </div>
 
                 {/* Tile 2: Needs Attention */}
@@ -342,24 +345,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     (e.key === 'Enter' || e.key === ' ') && setDashboardCategory('needsAttention')
                   }
                   aria-label={`View Needs Attention tasks (${currentDashboard.needsAttention.totalCount})`}
-                  className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                  className={`p-4 sm:p-5 rounded-xl cursor-pointer transition-all border ${
                     dashboardCategory === 'needsAttention'
                       ? 'bg-white/15 border-white/40 ring-2 ring-white/30 shadow-md'
                       : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                    <span className="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
                       <AlertCircle className="w-4 h-4 text-amber-400" /> Attention
                     </span>
                     {dashboardCategory === 'needsAttention' && (
                       <span className="w-2 h-2 rounded-full bg-amber-400" />
                     )}
                   </div>
-                  <div className="text-2xl font-black tracking-tight text-amber-300">
+                  <div className="text-3xl font-black tracking-tight text-amber-300">
                     {currentDashboard.needsAttention.totalCount}
                   </div>
-                  <span className="text-[11px] text-gray-400 mt-0.5 block">Overdue or urgent</span>
+                  <span className="text-sm text-gray-300 mt-1 block">Overdue or urgent</span>
                 </div>
 
                 {/* Tile 3: Upcoming */}
@@ -371,24 +374,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     (e.key === 'Enter' || e.key === ' ') && setDashboardCategory('upcoming')
                   }
                   aria-label={`View Upcoming tasks (${currentDashboard.upcoming.totalCount})`}
-                  className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                  className={`p-4 sm:p-5 rounded-xl cursor-pointer transition-all border ${
                     dashboardCategory === 'upcoming'
                       ? 'bg-white/15 border-white/40 ring-2 ring-white/30 shadow-md'
                       : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                    <span className="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
                       <Calendar className="w-4 h-4 text-indigo-400" /> Upcoming
                     </span>
                     {dashboardCategory === 'upcoming' && (
                       <span className="w-2 h-2 rounded-full bg-indigo-400" />
                     )}
                   </div>
-                  <div className="text-2xl font-black tracking-tight text-white">
+                  <div className="text-3xl font-black tracking-tight text-white">
                     {currentDashboard.upcoming.totalCount}
                   </div>
-                  <span className="text-[11px] text-gray-400 mt-0.5 block">Scheduled later</span>
+                  <span className="text-sm text-gray-300 mt-1 block">Scheduled later</span>
                 </div>
 
                 {/* Tile 4: Recently Completed */}
@@ -400,24 +403,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     (e.key === 'Enter' || e.key === ' ') && setDashboardCategory('completed')
                   }
                   aria-label={`View Completed tasks (${currentDashboard.recentlyCompleted.totalCount})`}
-                  className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                  className={`p-4 sm:p-5 rounded-xl cursor-pointer transition-all border ${
                     dashboardCategory === 'completed'
                       ? 'bg-white/15 border-white/40 ring-2 ring-white/30 shadow-md'
                       : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
+                    <span className="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Delivered
                     </span>
                     {dashboardCategory === 'completed' && (
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     )}
                   </div>
-                  <div className="text-2xl font-black tracking-tight text-emerald-300">
+                  <div className="text-3xl font-black tracking-tight text-emerald-300">
                     {currentDashboard.recentlyCompleted.totalCount}
                   </div>
-                  <span className="text-[11px] text-gray-400 mt-0.5 block">Finished this week</span>
+                  <span className="text-sm text-gray-300 mt-1 block">Finished this week</span>
                 </div>
               </div>
             </div>
@@ -426,11 +429,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Active Category Tasks Preview on Dashboard */}
           <section className="space-y-4">
             <div className="flex items-center justify-between pb-1">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-[var(--ink)] tracking-tight">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl font-bold text-[var(--ink)] tracking-tight">
                   {activeDashboardSection.title}
                 </h2>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)]">
+                <span className="text-sm font-semibold px-3 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--line)] text-[var(--muted)]">
                   {activeDashboardSection.items.length}
                 </span>
               </div>
@@ -446,9 +449,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       setActiveTab('tasks');
                     }
                   }}
-                  className="text-xs font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  className="text-sm font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  Open in Tasks view <ArrowRight className="w-3.5 h-3.5" />
+                  Open in Tasks view <ArrowRight className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -468,7 +471,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             ) : (
               <div className="p-12 text-center border border-dashed border-[var(--line)] rounded-xl bg-[var(--surface)]">
-                <p className="text-xs text-[var(--muted)]">{activeDashboardSection.emptyText}</p>
+                <p className="text-base font-medium text-[var(--muted)]">{activeDashboardSection.emptyText}</p>
               </div>
             )}
           </section>
